@@ -1,0 +1,89 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h1>🤖 Chatbot Service</h1>
+    <p>Test your AWS Lex V2 Bot</p>
+  </div>
+
+  <div class="config-section">
+    <div class="config-row">
+      <label for="bot-id">Bot ID:</label>
+      <input 
+        type="text" 
+        id="bot-id" 
+        [(ngModel)]="botId"
+        (input)="saveConfiguration()"
+        placeholder="Enter your Lex Bot ID">
+    </div>
+
+    <div class="config-row">
+      <label for="bot-alias-id">Bot Alias ID:</label>
+      <input 
+        type="text" 
+        id="bot-alias-id" 
+        [(ngModel)]="botAliasId"
+        (input)="saveConfiguration()"
+        placeholder="Enter your Bot Alias ID">
+    </div>
+
+    <div class="config-row">
+      <label for="locale-id">Locale ID:</label>
+      <input 
+        type="text" 
+        id="locale-id" 
+        [(ngModel)]="localeId"
+        (input)="saveConfiguration()"
+        placeholder="en_US">
+    </div>
+
+    <div class="config-row">
+      <label for="region">AWS Region:</label>
+      <input 
+        type="text" 
+        id="region" 
+        [(ngModel)]="region"
+        (input)="saveConfiguration()"
+        placeholder="us-east-1">
+    </div>
+  </div>
+
+  <div class="status" [ngClass]="{'connected': isConnected, 'error': connectionStatus.includes('Error')}">
+    {{ connectionStatus }}
+  </div>
+
+  <div class="messages" #messagesContainer>
+    <div 
+      *ngFor="let message of messages" 
+      class="message"
+      [ngClass]="{'user': message.sender === 'user', 'bot': message.sender === 'bot'}">
+      <div class="message-content">
+        <div class="message-text">{{ message.text }}</div>
+        <div class="message-time">
+          {{ message.sender === 'user' ? 'You' : 'Bot' }} • 
+          {{ message.timestamp | date:'short' }}
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="message bot">
+      <div class="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-section">
+    <button class="clear-btn" (click)="clearChat()" title="Clear chat">🗑️</button>
+    <input 
+      type="text" 
+      [(ngModel)]="userMessage"
+      (keypress)="onKeyPress($event)"
+      [disabled]="!isConnected || isLoading"
+      placeholder="Type your message here...">
+    <button 
+      (click)="sendMessage()" 
+      [disabled]="!isConnected || isLoading || !userMessage.trim()">
+      Send
+    </button>
+  </div>
+</div>
+
