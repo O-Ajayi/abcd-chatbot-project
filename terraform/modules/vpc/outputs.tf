@@ -18,13 +18,15 @@ output "private_subnet_ids" {
   value       = aws_subnet.private[*].id
 }
 
+# Security groups are now managed by the security-groups module
+# These outputs are kept for backward compatibility
 output "lambda_security_group_id" {
-  description = "Lambda security group ID"
-  value       = aws_security_group.lambda.id
+  description = "Lambda security group ID (deprecated - use security-groups module)"
+  value       = null
 }
 
 output "rds_security_group_id" {
-  description = "RDS security group ID"
-  value       = aws_security_group.rds.id
+  description = "RDS security group ID (deprecated - use security-groups module)"
+  value       = null
 }
 

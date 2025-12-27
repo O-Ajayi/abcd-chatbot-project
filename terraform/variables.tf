@@ -47,6 +47,37 @@ variable "availability_zones" {
   default     = ["us-east-1a", "us-east-1b"]
 }
 
+# Security Groups Configuration
+variable "create_security_groups" {
+  description = "Whether to create security groups or use existing"
+  type        = bool
+  default     = true
+}
+
+variable "existing_lambda_security_group_id" {
+  description = "Existing Lambda security group ID (required if create_security_groups is false)"
+  type        = string
+  default     = null
+}
+
+variable "existing_rds_security_group_id" {
+  description = "Existing RDS security group ID (required if create_security_groups is false)"
+  type        = string
+  default     = null
+}
+
+variable "existing_lex_connect_security_group_id" {
+  description = "Existing Lex/Connect security group ID (optional)"
+  type        = string
+  default     = null
+}
+
+variable "existing_bedrock_security_group_id" {
+  description = "Existing Bedrock security group ID (optional)"
+  type        = string
+  default     = null
+}
+
 # RDS Configuration
 variable "create_rds" {
   description = "Whether to create a new RDS instance or use existing"
@@ -97,7 +128,25 @@ variable "rds_password" {
   sensitive   = true
 }
 
+variable "lambda_package_paths" {
+  description = "Map of Lambda function names to their package file paths (relative to terraform directory). Leave null to use placeholder packages."
+  type        = map(string)
+  default     = null
+  # Example:
+  # lambda_package_paths = {
+  #   "chatbot-processor" = "../packages/chatbot-processor.zip"
+  #   "chatbot-analyzer" = "../packages/chatbot-analyzer.zip"
+  #   "chatbot-reviewer" = "../packages/chatbot-reviewer.zip"
+  # }
+}
+
 # Lambda Functions Configuration
+variable "create_lambda_functions" {
+  description = "Whether to create Lambda functions"
+  type        = bool
+  default     = true
+}
+
 variable "lambda_functions" {
   description = "List of Lambda function configurations"
   type = list(object({
@@ -194,6 +243,12 @@ variable "dynamodb_tables" {
 }
 
 # Lex Bot Configuration
+variable "create_lex_bot" {
+  description = "Whether to create Lex bot"
+  type        = bool
+  default     = true
+}
+
 variable "lex_bot_name" {
   description = "Name of the Lex bot"
   type        = string
@@ -345,6 +400,13 @@ variable "cloudwatch_dashboard_name" {
   description = "Name of the CloudWatch dashboard"
   type        = string
   default     = "Chatbot-Dashboard"
+}
+
+# S3 Configuration
+variable "lex_logs_retention_days" {
+  description = "Number of days to retain Lex bot logs in S3"
+  type        = number
+  default     = 30
 }
 
 # Tags

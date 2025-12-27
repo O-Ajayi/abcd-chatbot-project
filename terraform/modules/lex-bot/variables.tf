@@ -40,6 +40,7 @@ variable "sample_intents" {
 variable "lambda_function_arn" {
   description = "Lambda function ARN for Lex fulfillment"
   type        = string
+  default     = null
 }
 
 variable "tags" {

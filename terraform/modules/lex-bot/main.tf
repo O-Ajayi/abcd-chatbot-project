@@ -34,8 +34,12 @@ resource "aws_lexv2models_intent" "intents" {
 
   description = each.value.description
 
-  sample_utterances {
-    utterance = each.value.utterances
+  # Sample utterances - use dynamic block for multiple utterances
+  dynamic "sample_utterance" {
+    for_each = each.value.utterances
+    content {
+      utterance = sample_utterance.value
+    }
   }
 
   fulfillment_code_hook {
@@ -44,10 +48,17 @@ resource "aws_lexv2models_intent" "intents" {
 }
 
 # Lex V2 Bot Version
+# Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lexv2models_bot_version
 resource "aws_lexv2models_bot_version" "main" {
   bot_id = aws_lexv2models_bot.main.id
 
   description = "Production version of ${var.bot_name}"
+
+  locale_specification = {
+    (var.locale_id) = {
+      source_bot_version = "DRAFT"
+    }
+  }
 
   depends_on = [
     aws_lexv2models_bot_locale.main,
@@ -56,29 +67,19 @@ resource "aws_lexv2models_bot_version" "main" {
 }
 
 # Lex V2 Bot Alias
-resource "aws_lexv2models_bot_alias" "main" {
-  bot_alias_name = "${var.project_name}-${var.environment}-alias"
-  bot_id         = aws_lexv2models_bot.main.id
-  bot_version    = aws_lexv2models_bot_version.main.bot_version
-
-  description = "Alias for ${var.bot_name}"
-
-  bot_alias_locale_settings {
-    bot_alias_locale_setting {
-      locale_id = var.locale_id
-      enabled   = true
-
-      code_hook_specification {
-        lambda_code_hook {
-          code_hook_interface_version = "1.0"
-          lambda_arn                  = var.lambda_function_arn
-        }
-      }
-    }
-  }
-
-  tags = var.tags
-}
+# Note: The aws_lexv2models_bot_alias resource type is not available in the current AWS provider
+# Bot aliases should be created via AWS Console, CLI, or using the AWS Cloud Control API provider
+# For now, we'll comment this out and users can create aliases manually or via CLI
+# Example CLI command:
+# aws lexv2-models create-bot-alias --bot-id <bot-id> --bot-alias-name <alias-name> --bot-version <version>
+#
+# resource "aws_lexv2models_bot_alias" "main" {
+#   bot_alias_name = "${var.project_name}-${var.environment}-alias"
+#   bot_id         = aws_lexv2models_bot.main.id
+#   bot_version    = aws_lexv2models_bot_version.main.bot_version
+#   description    = "Alias for ${var.bot_name}"
+#   tags           = var.tags
+# }
 
 # IAM Role for Lex
 resource "aws_iam_role" "lex" {
@@ -119,8 +120,10 @@ resource "aws_iam_role_policy" "lex_lambda" {
   })
 }
 
-# Lambda Permission for Lex
+# Lambda Permission for Lex (only if Lambda function ARN is provided)
 resource "aws_lambda_permission" "lex" {
+  count = var.lambda_function_arn != null ? 1 : 0
+
   statement_id  = "AllowExecutionFromLex"
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_arn

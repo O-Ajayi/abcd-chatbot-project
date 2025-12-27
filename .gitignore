@@ -11,9 +11,21 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Lambda placeholder files
-modules/lambda-functions/index.py
-modules/lambda-functions/placeholder.zip
+# Lambda build artifacts
+build/
+packages/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
 
 # IDE
 .idea/
@@ -32,4 +44,3 @@ Thumbs.db
 # Environment
 .env
 .env.local
-

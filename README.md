@@ -2,6 +2,8 @@
 
 A comprehensive Terraform infrastructure for deploying a production-ready chatbot service on AWS using Lex V2, Lambda, Connect, Bedrock, Kendra, RDS, and DynamoDB.
 
+**Maintained by**: HUB DevOps Team ([HUBDevops@sparksoftcorp.com](mailto:HUBDevops@sparksoftcorp.com)) | Oluwasegun Ajayi ([Oluwasegun.Ajayi@sparksoftcorp.com](mailto:Oluwasegun.Ajayi@sparksoftcorp.com))
+
 ## 🏗️ Architecture Overview
 
 This solution provides a complete chatbot infrastructure with:
@@ -32,47 +34,105 @@ This solution provides a complete chatbot infrastructure with:
 cd terraform
 ```
 
-### 2. Configure Variables
+### 2. Set Up Backend (S3 and DynamoDB)
 
-Copy the example variables file and customize it:
+Before initializing Terraform, you need to set up the backend infrastructure:
+
+#### Create S3 Bucket for State Storage
 
 ```bash
-cp terraform.tfvars.example terraform.tfvars
+aws s3 mb s3://your-terraform-state-bucket --region us-east-1
+aws s3api put-bucket-versioning \
+  --bucket your-terraform-state-bucket \
+  --versioning-configuration Status=Enabled
+aws s3api put-bucket-encryption \
+  --bucket your-terraform-state-bucket \
+  --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 ```
 
-Edit `terraform.tfvars` with your specific configuration:
+#### Create DynamoDB Table for State Locking
+
+```bash
+aws dynamodb create-table \
+  --table-name terraform-state-lock \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+```
+
+#### Update Backend Configuration Files
+
+Edit the backend configuration files in the `env/` directory with your actual S3 bucket name:
+
+- `env/dev/backend.conf` - Development environment backend
+- `env/test/backend.conf` - Test environment backend
+- `env/prod/backend.conf` - Production environment backend
+
+Each file should contain:
 
 ```hcl
-aws_region  = "us-east-1"
-project_name = "chatbot-service"
-environment  = "dev"
-
-# Set passwords and credentials
-rds_password = "YourSecurePassword123!"
-sns_subscription_emails = ["your-email@example.com"]
-
-# Configure whether to create or use existing resources
-create_vpc = true  # Set to false to use existing VPC
-create_rds = true  # Set to false to use existing RDS
+bucket         = "your-actual-terraform-state-bucket"
+key            = "chatbot-service/{environment}/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "terraform-state-lock"
+encrypt        = true
 ```
 
-### 3. Initialize Terraform
+### 3. Initialize Terraform for Your Environment
+
+Choose your environment (dev, test, or prod) and initialize:
+
+#### For DEV Environment:
 
 ```bash
-terraform init
+terraform init -backend-config=env/dev/backend.conf
+terraform plan -var-file=env/dev/terraform.tfvars
+terraform apply -var-file=env/dev/terraform.tfvars
 ```
 
-### 4. Review the Plan
+#### For TEST Environment:
 
 ```bash
-terraform plan
+terraform init -backend-config=env/test/backend.conf
+terraform plan -var-file=env/test/terraform.tfvars
+terraform apply -var-file=env/test/terraform.tfvars
 ```
 
-### 5. Apply the Configuration
+#### For PROD Environment:
 
 ```bash
-terraform apply
+terraform init -backend-config=env/prod/backend.conf
+terraform plan -var-file=env/prod/terraform.tfvars
+terraform apply -var-file=env/prod/terraform.tfvars
 ```
+
+### 4. Quick Reference: Environment Commands
+
+All environment-specific files are organized in the `env/` directory. Use these commands based on your target environment:
+
+**Dev Environment:**
+```bash
+terraform init -backend-config=env/dev/backend.conf
+terraform plan -var-file=env/dev/terraform.tfvars
+terraform apply -var-file=env/dev/terraform.tfvars
+```
+
+**Test Environment:**
+```bash
+terraform init -backend-config=env/test/backend.conf
+terraform plan -var-file=env/test/terraform.tfvars
+terraform apply -var-file=env/test/terraform.tfvars
+```
+
+**Prod Environment:**
+```bash
+terraform init -backend-config=env/prod/backend.conf
+terraform plan -var-file=env/prod/terraform.tfvars
+terraform apply -var-file=env/prod/terraform.tfvars
+```
+
+> **Note:** See `terraform/ENVIRONMENTS.md` for detailed environment management guide.
 
 Type `yes` when prompted to create the resources.
 
@@ -483,13 +543,34 @@ This project is licensed under the MIT License.
 4. **Kendra**: Kendra indexes can take time to create and index content.
 5. **Connect**: AWS Connect instances are region-specific and may have availability limitations.
 
-## 🆘 Support
+## 🆘 Support & Maintenance
 
-For issues and questions:
-1. Check the troubleshooting section
+For issues, questions, or support requests related to the AWS Chatbot Service:
+
+**Primary Contacts:**
+- **HUB DevOps Team**: [HUBDevops@sparksoftcorp.com](mailto:HUBDevops@sparksoftcorp.com)
+- **Oluwasegun Ajayi**: [Oluwasegun.Ajayi@sparksoftcorp.com](mailto:Oluwasegun.Ajayi@sparksoftcorp.com)
+
+**Before contacting support:**
+1. Check the troubleshooting section below
 2. Review AWS service documentation
 3. Check Terraform provider documentation
-4. Open an issue in the repository
+4. Review the `ENVIRONMENTS.md` guide for environment-specific issues
+5. See [SUPPORT.md](../SUPPORT.md) for detailed support process
+
+**Support Process:**
+- For urgent production issues, contact the maintainers directly
+- For feature requests or general questions, email the HUB DevOps team
+- Include environment details (dev/test/prod) and error messages when reporting issues
+- See [SUPPORT.md](../SUPPORT.md) for complete support guidelines
+
+---
+
+## 👥 Maintainers
+
+This project is maintained by:
+- **HUB DevOps Team** - [HUBDevops@sparksoftcorp.com](mailto:HUBDevops@sparksoftcorp.com)
+- **Oluwasegun Ajayi** - [Oluwasegun.Ajayi@sparksoftcorp.com](mailto:Oluwasegun.Ajayi@sparksoftcorp.com)
 
 ---
 

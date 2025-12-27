@@ -8,10 +8,12 @@ output "bot_arn" {
   value       = aws_lexv2models_bot.main.arn
 }
 
-output "bot_alias_id" {
-  description = "Lex bot alias ID"
-  value       = aws_lexv2models_bot_alias.main.bot_alias_id
-}
+# Bot alias output removed - aws_lexv2models_bot_alias resource is not available in AWS provider
+# Bot aliases should be created manually via AWS Console or CLI
+# output "bot_alias_id" {
+#   description = "Lex bot alias ID"
+#   value       = aws_lexv2models_bot_alias.main.bot_alias_id
+# }
 
 output "bot_version" {
   description = "Lex bot version"

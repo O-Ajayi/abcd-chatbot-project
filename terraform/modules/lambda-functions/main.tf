@@ -87,6 +87,20 @@ resource "aws_iam_role_policy" "lambda" {
           "kendra:Retrieve"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "${var.kendra_data_source_bucket != "" ? "arn:aws:s3:::${var.kendra_data_source_bucket}" : "*"}/*",
+          "${var.kendra_data_source_bucket != "" ? "arn:aws:s3:::${var.kendra_data_source_bucket}" : "*"}",
+          "${var.lex_bot_logs_bucket != "" ? "arn:aws:s3:::${var.lex_bot_logs_bucket}" : "*"}/*",
+          "${var.lex_bot_logs_bucket != "" ? "arn:aws:s3:::${var.lex_bot_logs_bucket}" : "*"}"
+        ]
       }
     ]
   })
@@ -113,9 +127,9 @@ resource "aws_lambda_function" "functions" {
   timeout       = each.value.timeout
   memory_size   = each.value.memory_size
 
-  # Use a placeholder zip file - users should replace with actual code
-  filename         = "${path.module}/placeholder.zip"
-  source_code_hash = filebase64sha256("${path.module}/placeholder.zip")
+  # Use built package if available, otherwise placeholder from packages directory
+  filename         = var.lambda_package_paths != null && contains(keys(var.lambda_package_paths), each.value.name) ? var.lambda_package_paths[each.value.name] : "${path.root}/../packages/placeholder.zip"
+  source_code_hash = var.lambda_package_paths != null && contains(keys(var.lambda_package_paths), each.value.name) ? filebase64sha256(var.lambda_package_paths[each.value.name]) : filebase64sha256("${path.root}/../packages/placeholder.zip")
 
   dynamic "environment" {
     for_each = [1]
@@ -123,10 +137,17 @@ resource "aws_lambda_function" "functions" {
       variables = merge(
         each.value.environment_variables,
         {
-          RDS_ENDPOINT     = var.rds_endpoint != "" ? var.rds_endpoint : ""
-          SQS_QUEUE_URL    = var.sqs_queue_url != "" ? var.sqs_queue_url : ""
-          SNS_TOPIC_ARN    = var.sns_topic_arn
-          DYNAMODB_TABLES  = jsonencode(var.dynamodb_tables)
+          RDS_ENDPOINT          = var.rds_endpoint != "" ? var.rds_endpoint : ""
+          RDS_USERNAME          = var.rds_username != "" ? var.rds_username : ""
+          RDS_PASSWORD          = var.rds_password != "" ? var.rds_password : ""
+          RDS_DATABASE_NAME     = var.rds_database_name != "" ? var.rds_database_name : ""
+          SQS_QUEUE_URL         = var.sqs_queue_url != "" ? var.sqs_queue_url : ""
+          SNS_TOPIC_ARN         = var.sns_topic_arn
+          DYNAMODB_TABLES       = jsonencode(var.dynamodb_tables)
+          DYNAMODB_HISTORY_TABLE = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-ConversationHistory"] != null ? var.dynamodb_table_names["Chatbot-ConversationHistory"] : ""
+          DYNAMODB_REVIEWER_TABLE = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] != null ? var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] : ""
+          KENDRA_DATA_SOURCE_BUCKET = var.kendra_data_source_bucket != "" ? var.kendra_data_source_bucket : ""
+          LEX_BOT_LOGS_BUCKET   = var.lex_bot_logs_bucket != "" ? var.lex_bot_logs_bucket : ""
         }
       )
     }
