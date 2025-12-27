@@ -3,7 +3,6 @@
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
-*.tfvars
 !terraform.tfvars.example
 crash.log
 override.tf
@@ -13,8 +12,6 @@ override.tf.json
 
 # Lambda build artifacts
 build/
-packages/
-*.zip
 
 # Python
 __pycache__/
@@ -23,8 +20,6 @@ __pycache__/
 *.so
 .Python
 venv/
-env/
-ENV/
 .venv
 
 # IDE
