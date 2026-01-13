@@ -137,17 +137,17 @@ resource "aws_lambda_function" "functions" {
       variables = merge(
         each.value.environment_variables,
         {
-          RDS_ENDPOINT          = var.rds_endpoint != "" ? var.rds_endpoint : ""
-          RDS_USERNAME          = var.rds_username != "" ? var.rds_username : ""
-          RDS_PASSWORD          = var.rds_password != "" ? var.rds_password : ""
-          RDS_DATABASE_NAME     = var.rds_database_name != "" ? var.rds_database_name : ""
-          SQS_QUEUE_URL         = var.sqs_queue_url != "" ? var.sqs_queue_url : ""
-          SNS_TOPIC_ARN         = var.sns_topic_arn
-          DYNAMODB_TABLES       = jsonencode(var.dynamodb_tables)
-          DYNAMODB_HISTORY_TABLE = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-ConversationHistory"] != null ? var.dynamodb_table_names["Chatbot-ConversationHistory"] : ""
-          DYNAMODB_REVIEWER_TABLE = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] != null ? var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] : ""
+          RDS_ENDPOINT              = var.rds_endpoint != "" ? var.rds_endpoint : ""
+          RDS_USERNAME              = var.rds_username != "" ? var.rds_username : ""
+          RDS_PASSWORD              = var.rds_password != "" ? var.rds_password : ""
+          RDS_DATABASE_NAME         = var.rds_database_name != "" ? var.rds_database_name : ""
+          SQS_QUEUE_URL             = var.sqs_queue_url != "" ? var.sqs_queue_url : ""
+          SNS_TOPIC_ARN             = var.sns_topic_arn
+          DYNAMODB_TABLES           = jsonencode(var.dynamodb_tables)
+          DYNAMODB_HISTORY_TABLE    = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-ConversationHistory"] != null ? var.dynamodb_table_names["Chatbot-ConversationHistory"] : ""
+          DYNAMODB_REVIEWER_TABLE   = var.dynamodb_table_names != null && var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] != null ? var.dynamodb_table_names["Chatbot-Conversation-Reviewer"] : ""
           KENDRA_DATA_SOURCE_BUCKET = var.kendra_data_source_bucket != "" ? var.kendra_data_source_bucket : ""
-          LEX_BOT_LOGS_BUCKET   = var.lex_bot_logs_bucket != "" ? var.lex_bot_logs_bucket : ""
+          LEX_BOT_LOGS_BUCKET       = var.lex_bot_logs_bucket != "" ? var.lex_bot_logs_bucket : ""
         }
       )
     }

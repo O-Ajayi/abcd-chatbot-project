@@ -150,12 +150,12 @@ variable "create_lambda_functions" {
 variable "lambda_functions" {
   description = "List of Lambda function configurations"
   type = list(object({
-    name        = string
-    description = string
-    handler     = string
-    runtime     = string
-    timeout     = number
-    memory_size = number
+    name                  = string
+    description           = string
+    handler               = string
+    runtime               = string
+    timeout               = number
+    memory_size           = number
     environment_variables = map(string)
   }))
   default = [
@@ -274,8 +274,8 @@ variable "lex_sample_intents" {
     description = string
     utterances  = list(string)
     slots = list(object({
-      name            = string
-      slot_type       = string
+      name                     = string
+      slot_type                = string
       value_elicitation_prompt = string
     }))
   }))

@@ -16,12 +16,12 @@ output "rds_endpoint" {
 
 output "dynamodb_table_names" {
   description = "DynamoDB table names"
-  value       = module.dynamodb.table_names
+  value       = { for k, v in module.dynamodb : k => v.dynamodb_table_id }
 }
 
 output "dynamodb_table_arns" {
   description = "DynamoDB table ARNs"
-  value       = module.dynamodb.table_arns
+  value       = { for k, v in module.dynamodb : k => v.dynamodb_table_arn }
 }
 
 output "lambda_function_names" {
@@ -99,6 +99,21 @@ output "bedrock_agent_role_arn" {
   value       = var.create_bedrock_agent ? module.bedrock_agent[0].agent_role_arn : null
 }
 
+output "bedrock_guardrail_id" {
+  description = "Bedrock guardrail ID"
+  value       = var.create_bedrock_agent ? module.bedrock_agent[0].guardrail_id : null
+}
+
+output "bedrock_guardrail_arn" {
+  description = "Bedrock guardrail ARN"
+  value       = var.create_bedrock_agent ? module.bedrock_agent[0].guardrail_arn : null
+}
+
+output "bedrock_guardrail_version" {
+  description = "Bedrock guardrail version"
+  value       = var.create_bedrock_agent ? module.bedrock_agent[0].guardrail_version : null
+}
+
 output "kendra_index_id" {
   description = "Kendra index ID"
   value       = var.create_bedrock_agent && var.create_kendra_index ? module.bedrock_agent[0].kendra_index_id : null
@@ -107,11 +122,6 @@ output "kendra_index_id" {
 output "kendra_index_arn" {
   description = "Kendra index ARN"
   value       = var.create_bedrock_agent && var.create_kendra_index ? module.bedrock_agent[0].kendra_index_arn : null
-}
-
-output "knowledge_base_id" {
-  description = "Bedrock Knowledge Base ID"
-  value       = var.create_bedrock_agent && var.create_kendra_index ? module.bedrock_agent[0].knowledge_base_id : null
 }
 
 output "cloudwatch_dashboard_url" {

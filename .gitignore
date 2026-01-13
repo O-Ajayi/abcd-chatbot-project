@@ -1,4 +1,7 @@
 # Terraform
+# Local vendor modules
+terraform/modules/*/vendor/
+terraform/modules/dynamodb/vendor/
 *.tfstate
 *.tfstate.*
 .terraform/

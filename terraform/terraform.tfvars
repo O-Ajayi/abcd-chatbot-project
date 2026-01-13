@@ -1,5 +1,5 @@
 # AWS Configuration
-aws_region  = "us-east-1"
+aws_region   = "us-east-1"
 project_name = "chatbot-service"
 environment  = "dev"
 
@@ -9,7 +9,7 @@ create_vpc = true
 # existing_vpc_id = "vpc-xxxxxxxxx"
 # existing_subnet_ids = ["subnet-xxxxxxxxx", "subnet-yyyyyyyyy"]
 
-vpc_cidr = "10.0.0.0/16"
+vpc_cidr           = "10.0.0.0/16"
 availability_zones = ["us-east-1a", "us-east-1b"]
 
 # Security Groups Configuration
@@ -33,7 +33,7 @@ rds_username       = "chatbotadmin"
 rds_password       = "ChangeMe123!" # Change this to a secure password
 
 # Lambda Functions Configuration
-create_lambda_functions = true  # Set to false to skip Lambda function creation
+create_lambda_functions = true # Set to false to skip Lambda function creation
 
 lambda_functions = [
   {
@@ -104,7 +104,7 @@ dynamodb_tables = [
 ]
 
 # Lex Bot Configuration
-create_lex_bot = true  # Set to false to skip Lex bot creation
+create_lex_bot = true # Set to false to skip Lex bot creation
 
 lex_bot_name        = "ChatbotBot"
 lex_bot_description = "Chatbot service bot"
@@ -132,22 +132,22 @@ lex_sample_intents = [
 ]
 
 # SQS Configuration
-sqs_queue_name      = "chatbot-queue"
-sqs_dlq_name        = "chatbot-dlq"
+sqs_queue_name        = "chatbot-queue"
+sqs_dlq_name          = "chatbot-dlq"
 sqs_max_receive_count = 3
 
 # SNS Configuration
-sns_topic_name         = "chatbot-notifications"
+sns_topic_name          = "chatbot-notifications"
 sns_subscription_emails = ["your-email@example.com"] # Add your email addresses
 
 # AWS Connect Configuration
-create_connect_instance         = true
-connect_instance_alias         = "chatbot-connect"
+create_connect_instance          = true
+connect_instance_alias           = "chatbot-connect"
 connect_identity_management_type = "CONNECT_MANAGED"
 
 # Bedrock Configuration
-create_bedrock_agent  = true
-bedrock_agent_name    = "chatbot-agent"
+create_bedrock_agent     = true
+bedrock_agent_name       = "chatbot-agent"
 bedrock_foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 create_kendra_index = true
@@ -162,8 +162,8 @@ cloudwatch_dashboard_name = "Chatbot-Dashboard"
 # After building Lambda functions with ./scripts/build-lambda.sh, uncomment and update:
 lambda_package_paths = {
   "chatbot-processor" = "../packages/chatbot-processor.zip"
-  "chatbot-analyzer" = "../packages/chatbot-analyzer.zip"
-  "chatbot-reviewer" = "../packages/chatbot-reviewer.zip"
+  "chatbot-analyzer"  = "../packages/chatbot-analyzer.zip"
+  "chatbot-reviewer"  = "../packages/chatbot-reviewer.zip"
 }
 
 # S3 Configuration

@@ -2,12 +2,13 @@
 resource "aws_lexv2models_bot" "main" {
   name     = "${var.project_name}-${var.environment}-${var.bot_name}"
   role_arn = aws_iam_role.lex.arn
+  type = "Bot"
 
   data_privacy {
     child_directed = false
   }
 
-  idle_session_ttl_in_seconds = 300
+  idle_session_ttl_in_seconds = 600
 
   tags = var.tags
 }
@@ -79,6 +80,24 @@ resource "aws_lexv2models_bot_version" "main" {
 #   bot_version    = aws_lexv2models_bot_version.main.bot_version
 #   description    = "Alias for ${var.bot_name}"
 #   tags           = var.tags
+# }
+
+# OR Preferrably
+
+# resource "null_resource" "main_alias" {
+#   depends_on = [aws_lexv2models_bot_version.main]
+
+#   triggers = {
+#     bot_id         = aws_lexv2models_bot.main.id
+#     locale_id      = aws_lexv2models_bot_locale.main.locale_id
+#     latest_version = aws_lexv2models_bot_version.main.bot_version
+#     lambda_arn     = "module.lambda_supportBot_app.lambda_arn"
+#     logs_arn       = aws_cloudwatch_log_group.main.arn
+#   }
+
+#   provisioner "local-exec" {
+#     command = "./upsert_bot_alias.sh ${aws_lexv2models_bot.main.id} ${aws_lexv2models_bot_locale.main.locale_id} ${aws_lexv2models_bot_version.main.bot_version} '${module.lambda_supportBot_app.lambda_arn}' '${aws_cloudwatch_log_group.main.arn}' 'us-east-1'"
+#   }
 # }
 
 # IAM Role for Lex

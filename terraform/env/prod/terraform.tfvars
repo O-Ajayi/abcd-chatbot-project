@@ -1,18 +1,18 @@
 # AWS Configuration - PROD Environment
-aws_region  = "us-east-1"
+aws_region   = "us-east-1"
 project_name = "chatbot-service"
 environment  = "prod"
 
 # VPC Configuration
-create_vpc = true
-vpc_cidr = "10.2.0.0/16"
+create_vpc         = true
+vpc_cidr           = "10.2.0.0/16"
 availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
 
 # Security Groups Configuration
 create_security_groups = true
 
 # RDS Configuration
-create_rds = true
+create_rds         = true
 rds_instance_class = "db.t3.medium"
 rds_engine         = "postgres"
 rds_engine_version = "15.4"
@@ -92,7 +92,7 @@ dynamodb_tables = [
 ]
 
 # Lex Bot Configuration
-create_lex_bot = true
+create_lex_bot      = true
 lex_bot_name        = "ChatbotBot"
 lex_bot_description = "Chatbot service bot"
 lex_bot_locale_id   = "en_US"
@@ -119,22 +119,22 @@ lex_sample_intents = [
 ]
 
 # SQS Configuration
-sqs_queue_name      = "chatbot-queue"
-sqs_dlq_name        = "chatbot-dlq"
+sqs_queue_name        = "chatbot-queue"
+sqs_dlq_name          = "chatbot-dlq"
 sqs_max_receive_count = 5
 
 # SNS Configuration
-sns_topic_name         = "chatbot-notifications"
+sns_topic_name          = "chatbot-notifications"
 sns_subscription_emails = ["prod-alerts@example.com", "oncall@example.com"]
 
 # AWS Connect Configuration
-create_connect_instance         = true
-connect_instance_alias         = "chatbot-connect-prod"
+create_connect_instance          = true
+connect_instance_alias           = "chatbot-connect-prod"
 connect_identity_management_type = "CONNECT_MANAGED"
 
 # Bedrock Configuration
-create_bedrock_agent  = true
-bedrock_agent_name    = "chatbot-agent-prod"
+create_bedrock_agent     = true
+bedrock_agent_name       = "chatbot-agent-prod"
 bedrock_foundation_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 create_kendra_index = true
@@ -148,8 +148,8 @@ cloudwatch_dashboard_name = "Chatbot-Dashboard-Prod"
 # Lambda Package Paths
 lambda_package_paths = {
   "chatbot-processor" = "../packages/chatbot-processor.zip"
-  "chatbot-analyzer" = "../packages/chatbot-analyzer.zip"
-  "chatbot-reviewer" = "../packages/chatbot-reviewer.zip"
+  "chatbot-analyzer"  = "../packages/chatbot-analyzer.zip"
+  "chatbot-reviewer"  = "../packages/chatbot-reviewer.zip"
 }
 
 # S3 Configuration

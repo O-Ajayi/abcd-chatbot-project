@@ -5,9 +5,9 @@
 
 set -e
 
-BUCKET_NAME=${1:-"terraform-state-bucket-chatbot"}
+BUCKET_NAME=${1:-"mychoasss-terraform-state-bucket-chatbot"}
 REGION=${2:-"us-east-1"}
-DYNAMODB_TABLE="terraform-state-lock"
+DYNAMODB_TABLE="mychoasss-terraform-state-lock"
 
 echo "Setting up Terraform backend..."
 echo "S3 Bucket: ${BUCKET_NAME}"

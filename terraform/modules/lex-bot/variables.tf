@@ -30,8 +30,8 @@ variable "sample_intents" {
     description = string
     utterances  = list(string)
     slots = list(object({
-      name            = string
-      slot_type       = string
+      name                     = string
+      slot_type                = string
       value_elicitation_prompt = string
     }))
   }))
