@@ -20,3 +20,13 @@ output "bot_version" {
   value       = aws_lexv2models_bot_version.main.bot_version
 }
 
+output "lex_bot_logs_bucket_name" {
+  description = "S3 bucket name for Lex bot logs"
+  value       = aws_s3_bucket.lex_bot_logs.id
+}
+
+output "lex_bot_logs_bucket_arn" {
+  description = "S3 bucket ARN for Lex bot logs"
+  value       = aws_s3_bucket.lex_bot_logs.arn
+}
+

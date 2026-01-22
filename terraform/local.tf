@@ -181,10 +181,10 @@ locals {
 
   users = {
     sales_agent = {
-      password             = "SomeSecurePassword!1234" # Recommended to be passed in through variables if used
-      hierarchy_group_id   = try(module.connect[0].user_hierarchy_groups["child"].hierarchy_group_id, null)
-      routing_profile_id   = try(module.connect[0].routing_profiles["sales"].routing_profile_id, null)
-      security_profile_ids = try([module.connect[0].security_profiles["example"].security_profile_id], [])
+      password              = "SomeSecurePassword!1234" # Recommended to be passed in through variables if used
+      hierarchy_group_key   = "child"
+      routing_profile_key   = "sales"
+      security_profile_keys = ["example"]
 
       identity_info = {
         email      = "sales@example.com"
@@ -202,8 +202,9 @@ locals {
 
   # User Hierarchy Groups
   user_hierarchy_groups = {
+    parent = {}
     child = {
-      parent_group_id = try(module.connect[0].user_hierarchy_groups["parent"].hierarchy_group_id, null)
+      parent_group_key = "parent"
     }
   }
 

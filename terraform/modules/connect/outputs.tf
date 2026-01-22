@@ -104,7 +104,7 @@ output "users" {
 
 output "user_hierarchy_groups" {
   description = "Full output attributes of aws_connect_user_hierarchy_group resource(s)."
-  value       = aws_connect_user_hierarchy_group.this
+  value       = merge(aws_connect_user_hierarchy_group.root, aws_connect_user_hierarchy_group.child)
 }
 
 output "user_hierarchy_structure" {

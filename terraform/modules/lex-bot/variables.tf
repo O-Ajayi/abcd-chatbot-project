@@ -49,3 +49,8 @@ variable "tags" {
   default     = {}
 }
 
+variable "lex_logs_retention_days" {
+  description = "Number of days to retain Lex bot logs in S3"
+  type        = number
+  default     = null
+}

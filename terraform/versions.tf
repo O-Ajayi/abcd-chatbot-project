@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0, < 7.0"
     }
+    opensearch = {
+      source  = "opensearch-project/opensearch"
+      version = ">= 2.2.0"
+    }
     null = {
       source  = "hashicorp/null"
       version = "~> 3.0"

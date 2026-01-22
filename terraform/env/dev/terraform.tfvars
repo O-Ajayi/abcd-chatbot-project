@@ -4,12 +4,12 @@ project_name = "chatbot-service"
 environment  = "dev"
 
 # VPC Configuration
-create_vpc         = true
+create_vpc         = false
 vpc_cidr           = "10.0.0.0/16"
 availability_zones = ["us-east-1a", "us-east-1b"]
 
 # Security Groups Configuration
-create_security_groups = true
+create_security_groups = false
 
 # RDS Configuration
 create_rds         = false
@@ -21,7 +21,7 @@ rds_username       = "chatbotadmin"
 rds_password       = "ChangeMe123!" # Change this to a secure password
 
 # Lambda Functions Configuration
-create_lambda_functions = true
+create_lambda_functions = false
 
 lambda_functions = [
   {

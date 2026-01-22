@@ -359,6 +359,12 @@ variable "create_bedrock_agent" {
   default     = true
 }
 
+variable "create_default_kb" {
+  description = "Whether to create the default OpenSearch-based knowledge base"
+  type        = bool
+  default     = false
+}
+
 variable "bedrock_agent_name" {
   description = "Name of the Bedrock agent"
   type        = string
@@ -387,6 +393,12 @@ variable "kendra_edition" {
   description = "Kendra edition (DEVELOPER_EDITION or ENTERPRISE_EDITION)"
   type        = string
   default     = "DEVELOPER_EDITION"
+}
+
+variable "opensearch_url" {
+  description = "OpenSearch endpoint URL for the opensearch provider"
+  type        = string
+  default     = "http://localhost:9200"
 }
 
 # CloudWatch Configuration

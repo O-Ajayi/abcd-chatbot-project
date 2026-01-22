@@ -400,6 +400,20 @@ resource "aws_connect_lambda_function_association" "this" {
 ################################################################################
 # Users / Hierarchy Group / Structure
 ################################################################################
+locals {
+  user_hierarchy_groups_root = {
+    for key, value in var.user_hierarchy_groups :
+    key => value
+    if lookup(value, "parent_group_key", null) == null && lookup(value, "parent_group_id", null) == null
+  }
+
+  user_hierarchy_groups_child = {
+    for key, value in var.user_hierarchy_groups :
+    key => value
+    if lookup(value, "parent_group_key", null) != null || lookup(value, "parent_group_id", null) != null
+  }
+}
+
 resource "aws_connect_user" "this" {
   for_each = var.users
 
@@ -416,12 +430,23 @@ resource "aws_connect_user" "this" {
     desk_phone_number             = try(each.value.phone_config.desk_phone_number, null)
   }
 
-  routing_profile_id   = each.value.routing_profile_id
-  security_profile_ids = each.value.security_profile_ids
+  routing_profile_id = try(
+    each.value.routing_profile_id,
+    aws_connect_routing_profile.this[each.value.routing_profile_key].routing_profile_id
+  )
+  security_profile_ids = try(
+    each.value.security_profile_ids,
+    [for key in each.value.security_profile_keys : aws_connect_security_profile.this[key].security_profile_id]
+  )
 
   # optional
-  directory_user_id  = try(each.value.directory_user_id, null)
-  hierarchy_group_id = try(each.value.hierarchy_group_id, null)
+  directory_user_id = try(each.value.directory_user_id, null)
+  hierarchy_group_id = try(
+    each.value.hierarchy_group_id,
+    aws_connect_user_hierarchy_group.child[each.value.hierarchy_group_key].hierarchy_group_id,
+    aws_connect_user_hierarchy_group.root[each.value.hierarchy_group_key].hierarchy_group_id,
+    null
+  )
 
   dynamic "identity_info" {
     for_each = contains(keys(each.value), "identity_info") ? [1] : []
@@ -444,15 +469,34 @@ resource "aws_connect_user" "this" {
   )
 }
 
-resource "aws_connect_user_hierarchy_group" "this" {
-  for_each = var.user_hierarchy_groups
+resource "aws_connect_user_hierarchy_group" "root" {
+  for_each = local.user_hierarchy_groups_root
+
+  # required
+  instance_id = local.instance_id
+  name        = each.key
+
+  # tags
+  tags = merge(
+    { Name = each.key },
+    var.tags,
+    var.user_hierarchy_group_tags,
+    try(each.value.tags, {})
+  )
+}
+
+resource "aws_connect_user_hierarchy_group" "child" {
+  for_each = local.user_hierarchy_groups_child
 
   # required
   instance_id = local.instance_id
   name        = each.key
 
   # optional
-  parent_group_id = try(each.value.parent_group_id, null)
+  parent_group_id = (
+    lookup(each.value, "parent_group_id", null) != null ? each.value.parent_group_id :
+    aws_connect_user_hierarchy_group.root[each.value.parent_group_key].hierarchy_group_id
+  )
 
   # tags
   tags = merge(

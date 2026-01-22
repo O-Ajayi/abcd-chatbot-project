@@ -150,3 +150,59 @@ resource "aws_lambda_permission" "lex" {
   source_arn    = "${aws_lexv2models_bot.main.arn}/*"
 }
 
+# S3 Bucket for Lex Bot Logs
+resource "aws_s3_bucket" "lex_bot_logs" {
+  bucket = "${var.project_name}-${var.environment}-lex-bot-logs"
+
+  tags = merge(
+    var.tags,
+    {
+      Name    = "${var.project_name}-${var.environment}-lex-bot-logs"
+      Purpose = "LexBotLogs"
+    }
+  )
+}
+
+resource "aws_s3_bucket_versioning" "lex_bot_logs" {
+  bucket = aws_s3_bucket.lex_bot_logs.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "lex_bot_logs" {
+  bucket = aws_s3_bucket.lex_bot_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "lex_bot_logs" {
+  bucket = aws_s3_bucket.lex_bot_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "lex_bot_logs" {
+  bucket = aws_s3_bucket.lex_bot_logs.id
+
+  rule {
+    id     = "delete-old-logs"
+    status = "Enabled"
+
+    filter {
+      prefix = ""
+    }
+
+    expiration {
+      days = var.lex_logs_retention_days
+    }
+  }
+}

@@ -13,6 +13,10 @@ provider "aws" {
   }
 }
 
+provider "opensearch" {
+  url = var.opensearch_url
+}
+
 # Data sources for existing resources
 data "aws_availability_zones" "available" {
   state = "available"
@@ -147,63 +151,6 @@ resource "aws_s3_bucket_public_access_block" "kendra_data_source" {
   restrict_public_buckets = true
 }
 
-# S3 Bucket for Lex Bot Logs
-resource "aws_s3_bucket" "lex_bot_logs" {
-  bucket = "${var.project_name}-${var.environment}-lex-bot-logs"
-
-  tags = merge(
-    var.tags,
-    {
-      Name    = "${var.project_name}-${var.environment}-lex-bot-logs"
-      Purpose = "LexBotLogs"
-    }
-  )
-}
-
-resource "aws_s3_bucket_versioning" "lex_bot_logs" {
-  bucket = aws_s3_bucket.lex_bot_logs.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "lex_bot_logs" {
-  bucket = aws_s3_bucket.lex_bot_logs.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "lex_bot_logs" {
-  bucket = aws_s3_bucket.lex_bot_logs.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "lex_bot_logs" {
-  bucket = aws_s3_bucket.lex_bot_logs.id
-
-  rule {
-    id     = "delete-old-logs"
-    status = "Enabled"
-
-    filter {
-      prefix = ""
-    }
-
-    expiration {
-      days = var.lex_logs_retention_days
-    }
-  }
-}
-
 # SNS Topic
 resource "aws_sns_topic" "notifications" {
   name = "${var.project_name}-${var.sns_topic_name}"
@@ -282,7 +229,7 @@ module "lambda_functions" {
   rds_password              = var.rds_password
   rds_database_name         = var.rds_database_name
   kendra_data_source_bucket = aws_s3_bucket.kendra_data_source.id
-  lex_bot_logs_bucket       = aws_s3_bucket.lex_bot_logs.id
+  lex_bot_logs_bucket       = var.create_lex_bot ? module.lex_bot[0].lex_bot_logs_bucket_name : ""
   lambda_package_paths      = var.lambda_package_paths
   sns_topic_arn             = aws_sns_topic.notifications.arn
   tags                      = var.tags
@@ -300,6 +247,7 @@ module "lex_bot" {
   locale_id           = var.lex_bot_locale_id
   sample_intents      = var.lex_sample_intents
   lambda_function_arn = var.create_lambda_functions ? module.lambda_functions[0].lambda_arns["chatbot-processor"] : null
+  lex_logs_retention_days = var.lex_logs_retention_days
   tags                = var.tags
 }
 
@@ -447,9 +395,9 @@ module "bedrock_agent" {
   create_kendra_s3_data_source = var.create_kendra_index
 
   # Knowledge Base Configuration (S3 Data Source)
-  create_default_kb     = var.create_kendra_index
-  create_s3_data_source = var.create_kendra_index
-  kb_s3_data_source     = var.create_kendra_index ? aws_s3_bucket.kendra_data_source.arn : null
+  create_default_kb     = var.create_default_kb
+  create_s3_data_source = var.create_default_kb
+  kb_s3_data_source     = var.create_default_kb ? aws_s3_bucket.kendra_data_source.arn : null
 
   tags = var.tags
 }
