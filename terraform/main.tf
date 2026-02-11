@@ -240,15 +240,16 @@ module "lex_bot" {
   source = "./modules/lex-bot"
   count  = var.create_lex_bot ? 1 : 0
 
-  project_name        = var.project_name
-  environment         = var.environment
-  bot_name            = var.lex_bot_name
-  bot_description     = var.lex_bot_description
-  locale_id           = var.lex_bot_locale_id
-  sample_intents      = var.lex_sample_intents
-  lambda_function_arn = var.create_lambda_functions ? module.lambda_functions[0].lambda_arns["chatbot-processor"] : null
+  project_name           = var.project_name
+  environment            = var.environment
+  bot_name               = var.lex_bot_name
+  bot_description        = var.lex_bot_description
+  locale_id              = var.lex_bot_locale_id
+  sample_intents         = var.lex_sample_intents
+  lambda_function_arn    = var.create_lambda_functions ? module.lambda_functions[0].lambda_arns["chatbot-fulfillment"] : null
   lex_logs_retention_days = var.lex_logs_retention_days
-  tags                = var.tags
+  aws_region             = var.aws_region
+  tags                   = var.tags
 }
 
 # AWS Connect Module

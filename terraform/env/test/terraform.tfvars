@@ -56,6 +56,18 @@ lambda_functions = [
     environment_variables = {
       ENV = "test"
     }
+  },
+  {
+    name        = "chatbot-fulfillment"
+    description = "Lex intent fulfillment; invokes Bedrock Anthropic Claude 3.5 for responses"
+    handler     = "index.handler"
+    runtime     = "python3.11"
+    timeout     = 30
+    memory_size = 256
+    environment_variables = {
+      ENV                     = "test"
+      USE_BEDROCK_FULFILLMENT = "true"
+    }
   }
 ]
 
@@ -147,9 +159,10 @@ cloudwatch_dashboard_name = "Chatbot-Dashboard-Test"
 
 # Lambda Package Paths
 lambda_package_paths = {
-  "chatbot-processor" = "../packages/chatbot-processor.zip"
-  "chatbot-analyzer"  = "../packages/chatbot-analyzer.zip"
-  "chatbot-reviewer"  = "../packages/chatbot-reviewer.zip"
+  "chatbot-processor"   = "../packages/chatbot-processor.zip"
+  "chatbot-analyzer"   = "../packages/chatbot-analyzer.zip"
+  "chatbot-reviewer"   = "../packages/chatbot-reviewer.zip"
+  "chatbot-fulfillment" = "../packages/chatbot-fulfillment.zip"
 }
 
 # S3 Configuration

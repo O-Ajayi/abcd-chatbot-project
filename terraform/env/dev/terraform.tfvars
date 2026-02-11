@@ -56,6 +56,18 @@ lambda_functions = [
     environment_variables = {
       ENV = "dev"
     }
+  },
+  {
+    name        = "chatbot-fulfillment"
+    description = "Lex intent fulfillment; invokes Bedrock Anthropic Claude 3.5 for responses"
+    handler     = "index.handler"
+    runtime     = "python3.11"
+    timeout     = 30
+    memory_size = 256
+    environment_variables = {
+      ENV                     = "dev"
+      USE_BEDROCK_FULFILLMENT = "true"
+    }
   }
 ]
 
@@ -102,19 +114,37 @@ lex_sample_intents = [
     name        = "GreetingIntent"
     description = "Handles greeting messages"
     utterances  = ["Hello", "Hi", "Hey", "Good morning", "Good afternoon"]
-    slots       = []
+    slots = [
+      {
+        name                     = "UserName"
+        slot_type                = "AMAZON.FirstName"
+        value_elicitation_prompt = "What is your name?"
+      }
+    ]
   },
   {
     name        = "HelpIntent"
     description = "Handles help requests"
     utterances  = ["I need help", "Can you help me", "Help", "What can you do"]
-    slots       = []
+    slots = [
+      {
+        name                     = "HelpTopic"
+        slot_type                = "AMAZON.AlphaNumeric"
+        value_elicitation_prompt = "What do you need help with? For example: account, billing, or technical support."
+      }
+    ]
   },
   {
     name        = "GoodbyeIntent"
     description = "Handles goodbye messages"
     utterances  = ["Goodbye", "Bye", "See you later", "Thanks"]
-    slots       = []
+    slots = [
+      {
+        name                     = "Feedback"
+        slot_type                = "AMAZON.AlphaNumeric"
+        value_elicitation_prompt = "Any feedback before you go? You can also say 'no' or 'skip'."
+      }
+    ]
   }
 ]
 
@@ -147,9 +177,10 @@ cloudwatch_dashboard_name = "Chatbot-Dashboard-Dev"
 
 # Lambda Package Paths
 lambda_package_paths = {
-  "chatbot-processor" = "../packages/chatbot-processor.zip"
-  "chatbot-analyzer"  = "../packages/chatbot-analyzer.zip"
-  "chatbot-reviewer"  = "../packages/chatbot-reviewer.zip"
+  "chatbot-processor"   = "../packages/chatbot-processor.zip"
+  "chatbot-analyzer"   = "../packages/chatbot-analyzer.zip"
+  "chatbot-reviewer"   = "../packages/chatbot-reviewer.zip"
+  "chatbot-fulfillment" = "../packages/chatbot-fulfillment.zip"
 }
 
 # S3 Configuration

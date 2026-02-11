@@ -48,6 +48,75 @@ resource "aws_lexv2models_intent" "intents" {
   }
 }
 
+# Flatten intents + slots for slot resources
+locals {
+  intent_slot_entries = flatten([
+    for intent in var.sample_intents : [
+      for slot in intent.slots : {
+        intent_name              = intent.name
+        slot_name                = slot.name
+        slot_type                = slot.slot_type
+        value_elicitation_prompt = slot.value_elicitation_prompt
+      }
+    ]
+  ])
+  intent_slots_map = {
+    for entry in local.intent_slot_entries : "${entry.intent_name}_${entry.slot_name}" => entry
+  }
+}
+
+# Lex V2 Slots (per-intent slots used in fulfillment)
+resource "aws_lexv2models_slot" "slots" {
+  for_each = local.intent_slots_map
+
+  bot_id      = aws_lexv2models_bot.main.id
+  bot_version = "DRAFT"
+  intent_id   = aws_lexv2models_intent.intents[each.value.intent_name].intent_id
+  locale_id   = var.locale_id
+  name        = each.value.slot_name
+  slot_type_id = each.value.slot_type
+
+  value_elicitation_setting {
+    slot_constraint = "Required"
+
+    prompt_specification {
+      allow_interrupt = true
+      max_retries     = 2
+      message_selection_strategy = "Random"
+      message_group {
+        message {
+          plain_text_message {
+            value = each.value.value_elicitation_prompt
+          }
+        }
+      }
+
+      prompt_attempts_specification {
+        allow_interrupt = true
+        map_block_key   = "Initial"
+        allowed_input_types {
+          allow_audio_input = false
+          allow_dtmf_input  = false
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+      prompt_attempts_specification {
+        allow_interrupt = true
+        map_block_key   = "Retry1"
+        allowed_input_types {
+          allow_audio_input = false
+          allow_dtmf_input  = false
+        }
+        text_input_specification {
+          start_timeout_ms = 30000
+        }
+      }
+    }
+  }
+}
+
 # Lex V2 Bot Version
 # Reference: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lexv2models_bot_version
 resource "aws_lexv2models_bot_version" "main" {
@@ -63,8 +132,30 @@ resource "aws_lexv2models_bot_version" "main" {
 
   depends_on = [
     aws_lexv2models_bot_locale.main,
-    aws_lexv2models_intent.intents
+    aws_lexv2models_intent.intents,
+    aws_lexv2models_slot.slots,
+    null_resource.lex_build_locale
   ]
+}
+
+# Build bot locale (DRAFT) so NLU is ready before creating bot version
+resource "null_resource" "lex_build_locale" {
+  triggers = {
+    bot_id     = aws_lexv2models_bot.main.id
+    locale_id  = var.locale_id
+    intents    = jsonencode([for i in var.sample_intents : { name = i.name, slots = i.slots }])
+  }
+
+  depends_on = [
+    aws_lexv2models_bot_locale.main,
+    aws_lexv2models_intent.intents,
+    aws_lexv2models_slot.slots
+  ]
+
+  provisioner "local-exec" {
+    command     = "aws lexv2-models build-bot-locale --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${var.aws_region != null ? " --region " + var.aws_region : ""} && aws lexv2-models wait bot-locale-express-testing-available --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${var.aws_region != null ? " --region " + var.aws_region : ""}"
+    environment = var.aws_region != null ? { AWS_REGION = var.aws_region } : {}
+  }
 }
 
 # Lex V2 Bot Alias

@@ -54,3 +54,9 @@ variable "lex_logs_retention_days" {
   type        = number
   default     = null
 }
+
+variable "aws_region" {
+  description = "AWS region for Lex build-bot-locale CLI (optional; uses provider default if null)"
+  type        = string
+  default     = ""
+}
