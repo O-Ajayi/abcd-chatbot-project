@@ -114,37 +114,19 @@ lex_sample_intents = [
     name        = "GreetingIntent"
     description = "Handles greeting messages"
     utterances  = ["Hello", "Hi", "Hey", "Good morning", "Good afternoon"]
-    slots = [
-      {
-        name                     = "UserName"
-        slot_type                = "AMAZON.FirstName"
-        value_elicitation_prompt = "What is your name?"
-      }
-    ]
+    slots       = []
   },
   {
     name        = "HelpIntent"
     description = "Handles help requests"
     utterances  = ["I need help", "Can you help me", "Help", "What can you do"]
-    slots = [
-      {
-        name                     = "HelpTopic"
-        slot_type                = "AMAZON.AlphaNumeric"
-        value_elicitation_prompt = "What do you need help with? For example: account, billing, or technical support."
-      }
-    ]
+    slots       = []
   },
   {
     name        = "GoodbyeIntent"
     description = "Handles goodbye messages"
     utterances  = ["Goodbye", "Bye", "See you later", "Thanks"]
-    slots = [
-      {
-        name                     = "Feedback"
-        slot_type                = "AMAZON.AlphaNumeric"
-        value_elicitation_prompt = "Any feedback before you go? You can also say 'no' or 'skip'."
-      }
-    ]
+    slots       = []
   }
 ]
 

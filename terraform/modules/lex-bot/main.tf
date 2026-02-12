@@ -63,6 +63,7 @@ locals {
   intent_slots_map = {
     for entry in local.intent_slot_entries : "${entry.intent_name}_${entry.slot_name}" => entry
   }
+  lex_region_flag = var.aws_region != null ? format(" --region %s", var.aws_region) : ""
 }
 
 # Lex V2 Slots (per-intent slots used in fulfillment)
@@ -95,8 +96,21 @@ resource "aws_lexv2models_slot" "slots" {
         allow_interrupt = true
         map_block_key   = "Initial"
         allowed_input_types {
-          allow_audio_input = false
+          allow_audio_input = true
           allow_dtmf_input  = false
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms   = 640
+            max_length_ms    = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character     = "#"
+            end_timeout_ms     = 5000
+            max_length         = 5
+          }
         }
         text_input_specification {
           start_timeout_ms = 30000
@@ -106,8 +120,21 @@ resource "aws_lexv2models_slot" "slots" {
         allow_interrupt = true
         map_block_key   = "Retry1"
         allowed_input_types {
-          allow_audio_input = false
+          allow_audio_input = true
           allow_dtmf_input  = false
+        }
+        audio_and_dtmf_input_specification {
+          start_timeout_ms = 4000
+          audio_specification {
+            end_timeout_ms   = 640
+            max_length_ms    = 15000
+          }
+          dtmf_specification {
+            deletion_character = "*"
+            end_character     = "#"
+            end_timeout_ms     = 5000
+            max_length         = 5
+          }
         }
         text_input_specification {
           start_timeout_ms = 30000
@@ -130,16 +157,20 @@ resource "aws_lexv2models_bot_version" "main" {
     }
   }
 
-  depends_on = [
-    aws_lexv2models_bot_locale.main,
-    aws_lexv2models_intent.intents,
-    aws_lexv2models_slot.slots,
-    null_resource.lex_build_locale
-  ]
+  depends_on = concat(
+    [
+      aws_lexv2models_bot_locale.main,
+      aws_lexv2models_intent.intents,
+      aws_lexv2models_slot.slots,
+    ],
+    var.lex_skip_build_locale ? [] : [null_resource.lex_build_locale[0]]
+  )
 }
 
 # Build bot locale (DRAFT) so NLU is ready before creating bot version
 resource "null_resource" "lex_build_locale" {
+  count = var.lex_skip_build_locale ? 0 : 1
+
   triggers = {
     bot_id     = aws_lexv2models_bot.main.id
     locale_id  = var.locale_id
@@ -153,7 +184,9 @@ resource "null_resource" "lex_build_locale" {
   ]
 
   provisioner "local-exec" {
-    command     = "aws lexv2-models build-bot-locale --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${var.aws_region != null ? " --region " + var.aws_region : ""} && aws lexv2-models wait bot-locale-express-testing-available --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${var.aws_region != null ? " --region " + var.aws_region : ""}"
+    # Wait for "Built" (not "ReadyExpressTesting") so the locale is ready for CreateBotVersion.
+    # If this fails with status Failed, set lex_skip_build_locale=true to deploy without build, then run build manually and check: aws lexv2-models describe-bot-locale --bot-id <id> --bot-version DRAFT --locale-id <locale>
+    command     = "aws lexv2-models build-bot-locale --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag} && aws lexv2-models wait bot-locale-built --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag}"
     environment = var.aws_region != null ? { AWS_REGION = var.aws_region } : {}
   }
 }

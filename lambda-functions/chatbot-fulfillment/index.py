@@ -74,17 +74,13 @@ def fulfill_with_bedrock(
     session_state: Dict[str, Any],
     input_transcript: str,
     intent_name: str,
-    slot_values: Optional[Dict[str, str]] = None,
     use_bedrock: bool = True,
 ) -> Dict[str, Any]:
     """
-    Fulfill the intent: optionally call Bedrock for the reply, then return Lex response.
-    slot_values contains elicited slot values (e.g. UserName, HelpTopic, Feedback) for use in the reply.
+    Fulfill the intent: Lex user input is sent to Bedrock for reply, then returned to Lex.
+    No slots; fulfillment Lambda is the bridge between Lex and Bedrock.
     """
-    slot_values = slot_values or {}
     context = f"Intent: {intent_name}. User said: {input_transcript}"
-    if slot_values:
-        context += f". Slot values: {json.dumps(slot_values)}"
 
     if use_bedrock:
         try:
@@ -93,11 +89,10 @@ def fulfill_with_bedrock(
             logger.exception("Bedrock invoke failed: %s", e)
             response_text = f"I couldn't generate a response right now. (Error: {e})"
     else:
-        # Fallback responses when Bedrock is disabled or not used (can use slot values)
         fallbacks = {
-            "GreetingIntent": f"Hello{f', {slot_values.get(\"UserName\", \"\")}' if slot_values.get('UserName') else ''}! How can I help you today?",
-            "HelpIntent": f"I'm here to help{f' with: {slot_values.get(\"HelpTopic\", \"\")}' if slot_values.get('HelpTopic') else ''}. You can ask me more or say what you need.",
-            "GoodbyeIntent": f"Goodbye!{f' Thanks for your feedback: {slot_values.get(\"Feedback\", \"\")}' if slot_values.get('Feedback') else ''} Have a great day.",
+            "GreetingIntent": "Hello! How can I help you today?",
+            "HelpIntent": "I'm here to help. What would you like to know?",
+            "GoodbyeIntent": "Goodbye! Have a great day.",
         }
         response_text = fallbacks.get(intent_name, f"Got it. You said: {input_transcript}")
 
@@ -125,17 +120,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         intent = (session_state.get("intent") or proposed_next.get("intent") or {})
         intent_name = intent.get("name", "UnknownIntent")
         input_transcript = event.get("inputTranscript", "").strip() or "No input"
-        # Slots from session (e.g. UserName, HelpTopic, Feedback) for use in fulfillment
-        slots = intent.get("slots") or {}
-        slot_values = {k: (v.get("value", {}) or {}).get("interpretedValue") for k, v in slots.items() if v}
-
         use_bedrock = os.environ.get("USE_BEDROCK_FULFILLMENT", "true").lower() == "true"
 
         return fulfill_with_bedrock(
             session_state=session_state,
             input_transcript=input_transcript,
             intent_name=intent_name,
-            slot_values=slot_values,
             use_bedrock=use_bedrock,
         )
     except Exception as e:

@@ -60,3 +60,9 @@ variable "aws_region" {
   type        = string
   default     = ""
 }
+
+variable "lex_skip_build_locale" {
+  description = "If true, skip build-bot-locale after apply (use when build fails; create bot version manually or fix config and set back to false)"
+  type        = bool
+  default     = false
+}
