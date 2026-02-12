@@ -22,7 +22,22 @@ resource "aws_lexv2models_bot_locale" "main" {
   n_lu_intent_confidence_threshold = 0.4
 }
 
-# Lex V2 Intents
+# Wait for bot locale to leave "Creating" before creating intents (avoids ValidationException)
+resource "null_resource" "wait_for_lex_locale" {
+  triggers = {
+    bot_id    = aws_lexv2models_bot.main.id
+    locale_id = var.locale_id
+  }
+
+  depends_on = [aws_lexv2models_bot_locale.main]
+
+  provisioner "local-exec" {
+    command     = "aws lexv2-models wait bot-locale-created --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag}"
+    environment = var.aws_region != null ? { AWS_REGION = var.aws_region } : {}
+  }
+}
+
+# Lex V2 Intents (created only after locale is ready)
 resource "aws_lexv2models_intent" "intents" {
   for_each = {
     for idx, intent in var.sample_intents : intent.name => intent
@@ -46,6 +61,8 @@ resource "aws_lexv2models_intent" "intents" {
   fulfillment_code_hook {
     enabled = true
   }
+
+  depends_on = [null_resource.wait_for_lex_locale]
 }
 
 # Flatten intents + slots for slot resources

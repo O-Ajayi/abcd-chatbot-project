@@ -127,6 +127,12 @@ lex_sample_intents = [
     description = "Handles goodbye messages"
     utterances  = ["Goodbye", "Bye", "See you later", "Thanks"]
     slots       = []
+  },
+  {
+    name        = "FallbackIntent"
+    description = "Catches unrecognized input; fulfillment sends to Bedrock"
+    utterances  = []
+    slots       = []
   }
 ]
 
