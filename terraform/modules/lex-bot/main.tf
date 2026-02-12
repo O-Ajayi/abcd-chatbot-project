@@ -157,37 +157,39 @@ resource "aws_lexv2models_bot_version" "main" {
     }
   }
 
-  depends_on = concat(
-    [
-      aws_lexv2models_bot_locale.main,
-      aws_lexv2models_intent.intents,
-      aws_lexv2models_slot.slots,
-    ],
-    var.lex_skip_build_locale ? [] : [null_resource.lex_build_locale[0]]
-  )
+  depends_on = [
+    aws_lexv2models_bot_locale.main,
+    aws_lexv2models_intent.intents,
+    aws_lexv2models_slot.slots,
+    null_resource.lex_build_locale,
+  ]
 }
 
-# Build bot locale (DRAFT) so NLU is ready before creating bot version
+# Build bot locale (DRAFT) so NLU is ready before creating bot version. When lex_skip_build_locale is true, this no-ops.
 resource "null_resource" "lex_build_locale" {
-  count = var.lex_skip_build_locale ? 0 : 1
-
   triggers = {
     bot_id     = aws_lexv2models_bot.main.id
     locale_id  = var.locale_id
     intents    = jsonencode([for i in var.sample_intents : { name = i.name, slots = i.slots }])
+    skip_build = var.lex_skip_build_locale
   }
 
   depends_on = [
     aws_lexv2models_bot_locale.main,
     aws_lexv2models_intent.intents,
-    aws_lexv2models_slot.slots
+    aws_lexv2models_slot.slots,
   ]
 
   provisioner "local-exec" {
-    # Wait for "Built" (not "ReadyExpressTesting") so the locale is ready for CreateBotVersion.
-    # If this fails with status Failed, set lex_skip_build_locale=true to deploy without build, then run build manually and check: aws lexv2-models describe-bot-locale --bot-id <id> --bot-version DRAFT --locale-id <locale>
-    command     = "aws lexv2-models build-bot-locale --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag} && aws lexv2-models wait bot-locale-built --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag}"
-    environment = var.aws_region != null ? { AWS_REGION = var.aws_region } : {}
+    # When LEX_SKIP_BUILD=true, skip build. Otherwise wait for "Built" so the locale is ready for CreateBotVersion.
+    command = <<-EOT
+      if [ "$${LEX_SKIP_BUILD}" = "true" ]; then echo "Skipping Lex build (lex_skip_build_locale=true)"; exit 0; fi
+      aws lexv2-models build-bot-locale --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag} && aws lexv2-models wait bot-locale-built --bot-id ${aws_lexv2models_bot.main.id} --bot-version DRAFT --locale-id ${var.locale_id}${local.lex_region_flag}
+    EOT
+    environment = merge(
+      var.aws_region != null ? { AWS_REGION = var.aws_region } : {},
+      { LEX_SKIP_BUILD = var.lex_skip_build_locale ? "true" : "false" }
+    )
   }
 }
 
