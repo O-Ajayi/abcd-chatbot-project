@@ -209,6 +209,15 @@ resource "aws_sqs_queue_redrive_policy" "main" {
   })
 }
 
+# Lambda functions list: inject BEDROCK_INFERENCE_PROFILE_ARN for fulfillment when bedrock_fulfillment_model_id is set (inference profile ID or ARN)
+locals {
+  lambda_functions_with_bedrock = var.bedrock_fulfillment_model_id != null ? [
+    for f in var.lambda_functions : f.name == "chatbot-fulfillment" ? merge(f, {
+      environment_variables = merge(f.environment_variables, { BEDROCK_INFERENCE_PROFILE_ARN = var.bedrock_fulfillment_model_id })
+    }) : f
+  ] : var.lambda_functions
+}
+
 # Lambda Functions Module
 module "lambda_functions" {
   source = "./modules/lambda-functions"
@@ -216,7 +225,7 @@ module "lambda_functions" {
 
   project_name              = var.project_name
   environment               = var.environment
-  lambda_functions          = var.lambda_functions
+  lambda_functions          = local.lambda_functions_with_bedrock
   vpc_id                    = local.vpc_id
   subnet_ids                = local.subnet_ids
   security_group_ids        = local.lambda_security_group_id != null ? [local.lambda_security_group_id] : []

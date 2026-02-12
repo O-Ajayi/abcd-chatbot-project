@@ -377,6 +377,12 @@ variable "bedrock_foundation_model" {
   default     = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 }
 
+variable "bedrock_fulfillment_model_id" {
+  description = "Inference profile ID or ARN for the fulfillment Lambda (passed as BEDROCK_INFERENCE_PROFILE_ARN). Required in many regions; create in Bedrock console → Inference → Application inference profiles. Leave null to use Lambda default (BEDROCK_MODEL_ID)."
+  type        = string
+  default     = null
+}
+
 variable "create_kendra_index" {
   description = "Whether to create Kendra index"
   type        = bool

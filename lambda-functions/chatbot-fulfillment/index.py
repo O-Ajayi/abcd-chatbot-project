@@ -1,6 +1,7 @@
 """
 Chatbot Fulfillment Lambda Function
-Handles Lex V2 intent fulfillment and can invoke Bedrock (Anthropic Claude 3.5) for response generation.
+Handles Lex V2 intent fulfillment and invokes Bedrock via an inference profile for response generation.
+Uses BEDROCK_INFERENCE_PROFILE_ARN (recommended) or BEDROCK_MODEL_ID as the modelId for InvokeModel.
 """
 import json
 import os
@@ -12,18 +13,29 @@ import boto3
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Bedrock model ID for Anthropic Claude 3.5 (override via env if needed)
-BEDROCK_MODEL_ID = os.environ.get(
-    "BEDROCK_MODEL_ID",
-    "anthropic.claude-3-5-sonnet-20241022-v2:0",
-)
+
+def _get_bedrock_model_id() -> str:
+    """
+    Resolve the Bedrock model identifier for InvokeModel.
+    Prefer BEDROCK_INFERENCE_PROFILE_ARN (inference profile ID or ARN); fallback to BEDROCK_MODEL_ID.
+    In many accounts/regions, InvokeModel requires an inference profile that contains the model.
+    """
+    profile = os.environ.get("BEDROCK_INFERENCE_PROFILE_ARN", "").strip()
+    if profile:
+        return profile
+    return os.environ.get(
+        "BEDROCK_MODEL_ID",
+        "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    )
 
 
 def get_bedrock_response(user_message: str, intent_name: str, system_hint: Optional[str] = None) -> str:
     """
-    Invoke Bedrock Anthropic Claude 3.5 model and return the generated text.
+    Invoke Bedrock via inference profile (or model ID) and return the generated text.
+    Uses InvokeModel with modelId = inference profile ARN/ID or model ID.
     """
     client = boto3.client("bedrock-runtime")
+    model_id = _get_bedrock_model_id()
     system_prompt = system_hint or f"You are a helpful chatbot. The user triggered the intent: {intent_name}. Reply concisely and helpfully."
     body = {
         "anthropic_version": "bedrock-2023-05-31",
@@ -32,7 +44,7 @@ def get_bedrock_response(user_message: str, intent_name: str, system_hint: Optio
         "messages": [{"role": "user", "content": user_message}],
     }
     response = client.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
+        modelId=model_id,
         contentType="application/json",
         accept="application/json",
         body=json.dumps(body),
