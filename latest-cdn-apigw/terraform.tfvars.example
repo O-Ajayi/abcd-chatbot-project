@@ -1,0 +1,15 @@
+# Passthrough stack defaults (create mode)
+aws_region = "us-east-1"
+env        = "dev"
+cdn_name   = "hub"
+
+enable_apigw_passthrough       = true
+apigw_passthrough_network_mode = "create"
+apigw_passthrough_vpc_cidr     = "10.20.0.0/16"
+
+# Existing network mode example:
+# apigw_passthrough_network_mode                  = "existing"
+# apigw_passthrough_existing_vpc_id               = "vpc-0123456789abcdef0"
+# apigw_passthrough_existing_private_subnet_ids   = ["subnet-aaa", "subnet-bbb"]
+# apigw_passthrough_existing_alb_listener_arn     = "arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/my-alb/abc/123"
+# apigw_passthrough_existing_alb_security_group_ids = ["sg-0123456789abcdef0"]

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Central UI</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --success: #4ade80;
+            --error: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #1e3a5f, var(--bg) 55%);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card {
+            width: min(640px, 100%);
+            background: color-mix(in srgb, var(--panel) 92%, black);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.45);
+        }
+
+        h1 {
+            margin: 0 0 0.5rem;
+            font-size: 1.75rem;
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.65);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: 2px solid rgba(56, 189, 248, 0.45);
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 0.85rem 1.25rem;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #082f49;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .endpoint {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.9rem;
+            color: var(--accent);
+            word-break: break-all;
+            margin-bottom: 1rem;
+        }
+
+        .result {
+            min-height: 5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .result.ok {
+            border-color: rgba(74, 222, 128, 0.35);
+        }
+
+        .result.error {
+            border-color: rgba(248, 113, 113, 0.35);
+            color: var(--error);
+        }
+
+        .section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .section h2 {
+            margin: 0 0 0.5rem;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card">
+        <h1>Hub Central UI</h1>
+        <p>Check service status and pass dynamic input through API Gateway to the Lambda backend.</p>
+
+        <label for="user-input">Dynamic input</label>
+        <div class="row">
+            <input id="user-input" type="text" placeholder="Enter a value to send to the API" autocomplete="off" />
+            <button id="check-status" type="button">Check Status</button>
+        </div>
+
+        <div class="endpoint" id="endpoint-display"></div>
+        <div class="result" id="result">Waiting for status check...</div>
+
+        <section class="section">
+            <h2>ALB Passthrough hub-central</h2>
+            <p>Calls the private EC2 sample app through CloudFront → API Gateway → internal ALB.</p>
+
+            <label for="passthrough-input">Passthrough message</label>
+            <div class="row">
+                <input id="passthrough-input" type="text" placeholder="Optional path suffix, e.g. hub-central"
+                    autocomplete="off" />
+                <button id="check-passthrough" type="button">Test Passthrough</button>
+            </div>
+
+            <div class="endpoint" id="passthrough-endpoint-display"></div>
+            <div class="result" id="passthrough-result">Waiting for passthrough check...</div>
+        </section>
+    </main>
+
+    <script>
+        const inputEl = document.getElementById("user-input");
+        const buttonEl = document.getElementById("check-status");
+        const resultEl = document.getElementById("result");
+        const endpointEl = document.getElementById("endpoint-display");
+        const passthroughInputEl = document.getElementById("passthrough-input");
+        const passthroughButtonEl = document.getElementById("check-passthrough");
+        const passthroughResultEl = document.getElementById("passthrough-result");
+        const passthroughEndpointEl = document.getElementById("passthrough-endpoint-display");
+        const passthroughPrefix = "app";
+
+        function buildStatusUrl(inputValue) {
+            const params = new URLSearchParams();
+            if (inputValue) {
+                params.set("input", inputValue);
+            }
+
+            const query = params.toString();
+            return query ? `/status?${query}` : "/status";
+        }
+
+        async function readResponsePayload(response) {
+            const contentType = response.headers.get("content-type") || "";
+            const rawBody = await response.text();
+
+            if (contentType.includes("application/json") && rawBody) {
+                try {
+                    return JSON.parse(rawBody);
+                } catch (error) {
+                    return { message: rawBody };
+                }
+            }
+
+            return { message: rawBody || `HTTP ${response.status}` };
+        }
+
+        async function checkStatus() {
+            const inputValue = inputEl.value.trim();
+            const endpoint = buildStatusUrl(inputValue);
+
+            endpointEl.textContent = `GET ${window.location.origin}${endpoint}`;
+            buttonEl.disabled = true;
+            resultEl.className = "result";
+            resultEl.textContent = "Calling API Gateway...";
+
+            try {
+                const response = await fetch(endpoint);
+                const payload = await readResponsePayload(response);
+
+                if (!response.ok) {
+                    throw new Error(
+                        `[HTTP ${response.status}] ${payload.message || "Request failed"}`
+                    );
+                }
+
+                resultEl.className = "result ok";
+                resultEl.textContent = [
+                    payload.message,
+                    "",
+                    `Status: ${payload.status}`,
+                    inputValue ? `Input echoed: ${payload.input}` : "No input provided",
+                ].join("\n");
+            } catch (error) {
+                resultEl.className = "result error";
+                resultEl.textContent = `Failed to reach API Gateway endpoint.\n${error.message}`;
+            } finally {
+                buttonEl.disabled = false;
+            }
+        }
+
+        buttonEl.addEventListener("click", checkStatus);
+        inputEl.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                checkStatus();
+            }
+        });
+
+        endpointEl.textContent = `GET ${window.location.origin}/status`;
+        checkStatus();
+
+        function buildPassthroughPath(suffix) {
+            const trimmed = suffix.replace(/^\/+/, "");
+            if (!trimmed || trimmed === "health") {
+                return `/${passthroughPrefix}/health`;
+            }
+
+            return `/${passthroughPrefix}/${trimmed}`;
+        }
+
+        async function checkPassthrough() {
+            const suffix = passthroughInputEl.value.trim();
+            const endpoint = buildPassthroughPath(suffix);
+
+            passthroughEndpointEl.textContent = `GET ${window.location.origin}${endpoint}`;
+            passthroughButtonEl.disabled = true;
+            passthroughResultEl.className = "result";
+            passthroughResultEl.textContent = "Calling passthrough API Gateway route...";
+
+            try {
+                const response = await fetch(endpoint);
+                const payload = await readResponsePayload(response);
+
+                if (!response.ok) {
+                    throw new Error(
+                        `[HTTP ${response.status}] ${payload.message || "Request failed"}`
+                    );
+                }
+
+                passthroughResultEl.className = "result ok";
+                passthroughResultEl.textContent = [
+                    payload.message,
+                    "",
+                    `Service: ${payload.service}`,
+                    `Path: ${payload.path}`,
+                    `Route prefix: ${payload.route_prefix}`,
+                ].join("\n");
+            } catch (error) {
+                passthroughResultEl.className = "result error";
+                passthroughResultEl.textContent = `Failed to reach passthrough endpoint.\n${error.message}`;
+            } finally {
+                passthroughButtonEl.disabled = false;
+            }
+        }
+
+        passthroughButtonEl.addEventListener("click", checkPassthrough);
+        passthroughInputEl.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                checkPassthrough();
+            }
+        });
+
+        passthroughEndpointEl.textContent = `GET ${window.location.origin}/${passthroughPrefix}/health`;
+        checkPassthrough();
+    </script>
+</body>
+
+</html>
