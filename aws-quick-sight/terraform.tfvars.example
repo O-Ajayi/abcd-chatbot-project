@@ -1,0 +1,19 @@
+aws_region   = "us-east-1"
+project_name = "hub-quicksight"
+env          = "dev"
+
+# Required: admin QuickSight user and subscription notification email
+admin_email = "you@example.com"
+
+# Set to true only when QuickSight is not yet enabled in the AWS account
+enable_quicksight_subscription = false
+quicksight_account_name        = "hub-quicksight-demo"
+quicksight_edition             = "STANDARD"
+authentication_method          = "IAM_AND_QUICKSIGHT"
+
+# Sample dashboard built from the sales dataset
+create_dashboard = true
+
+tags = {
+  Owner = "platform-team"
+}
