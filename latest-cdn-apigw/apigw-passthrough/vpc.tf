@@ -1,5 +1,5 @@
 resource "aws_vpc" "main" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_internet_gateway" "main" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   vpc_id = aws_vpc.main[0].id
 
@@ -21,7 +21,7 @@ resource "aws_internet_gateway" "main" {
 }
 
 resource "aws_subnet" "public" {
-  count = local.create_network ? length(local.azs) : 0
+  count = local.create_vpc_network ? length(local.azs) : 0
 
   vpc_id                  = aws_vpc.main[0].id
   cidr_block              = local.public_subnet_cidrs[count.index]
@@ -34,7 +34,7 @@ resource "aws_subnet" "public" {
 }
 
 resource "aws_subnet" "private" {
-  count = local.create_network ? length(local.azs) : 0
+  count = local.create_vpc_network ? length(local.azs) : 0
 
   vpc_id            = aws_vpc.main[0].id
   cidr_block        = local.private_subnet_cidrs[count.index]
@@ -46,7 +46,7 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_eip" "nat" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   vpc = true
 
@@ -56,7 +56,7 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "main" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public[0].id
@@ -69,7 +69,7 @@ resource "aws_nat_gateway" "main" {
 }
 
 resource "aws_route_table" "public" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   vpc_id = aws_vpc.main[0].id
 
@@ -84,7 +84,7 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table" "private" {
-  count = local.create_network ? 1 : 0
+  count = local.create_vpc_network ? 1 : 0
 
   vpc_id = aws_vpc.main[0].id
 
@@ -99,14 +99,14 @@ resource "aws_route_table" "private" {
 }
 
 resource "aws_route_table_association" "public" {
-  count = local.create_network ? length(aws_subnet.public) : 0
+  count = local.create_vpc_network ? length(aws_subnet.public) : 0
 
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public[0].id
 }
 
 resource "aws_route_table_association" "private" {
-  count = local.create_network ? length(aws_subnet.private) : 0
+  count = local.create_vpc_network ? length(aws_subnet.private) : 0
 
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[0].id

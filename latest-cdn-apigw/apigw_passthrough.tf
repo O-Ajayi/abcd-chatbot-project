@@ -9,9 +9,7 @@ module "apigw_passthrough" {
   network_mode     = var.apigw_passthrough_network_mode
   vpc_cidr         = var.apigw_passthrough_vpc_cidr
 
-  existing_vpc_id                 = var.apigw_passthrough_existing_vpc_id
-  existing_private_subnet_ids     = var.apigw_passthrough_existing_private_subnet_ids
-  existing_vpc_cidr                 = var.apigw_passthrough_existing_vpc_cidr
-  existing_alb_listener_arn         = var.apigw_passthrough_existing_alb_listener_arn
-  existing_alb_security_group_ids   = var.apigw_passthrough_existing_alb_security_group_ids
+  existing_vpc_id             = var.apigw_passthrough_existing_vpc_id
+  existing_private_subnet_ids = var.apigw_passthrough_existing_private_subnet_ids
+  existing_vpc_cidr           = var.apigw_passthrough_existing_vpc_cidr
 }

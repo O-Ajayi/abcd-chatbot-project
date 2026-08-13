@@ -17,7 +17,7 @@ variable "project_name" {
 }
 
 variable "network_mode" {
-  description = "Use create to provision VPC/subnets/ALB/EC2, or existing to attach to pre-created network resources"
+  description = "Use create to provision VPC/subnets/NAT plus ALB/EC2, or existing to create only ALB/EC2 in a pre-existing VPC and subnets"
   type        = string
   default     = "create"
 
@@ -40,7 +40,7 @@ variable "existing_vpc_id" {
 }
 
 variable "existing_private_subnet_ids" {
-  description = "Existing private subnet IDs for VPC link and internal ALB when network_mode is existing"
+  description = "Existing private subnet IDs for ALB, EC2, and the API Gateway VPC link when network_mode is existing"
   type        = list(string)
   default     = []
 }
@@ -49,18 +49,6 @@ variable "existing_vpc_cidr" {
   description = "Optional VPC CIDR override when network_mode is existing"
   type        = string
   default     = ""
-}
-
-variable "existing_alb_listener_arn" {
-  description = "Existing ALB listener ARN when network_mode is existing"
-  type        = string
-  default     = ""
-}
-
-variable "existing_alb_security_group_ids" {
-  description = "Security group IDs attached to the existing ALB; ingress from the VPC link SG is added automatically"
-  type        = list(string)
-  default     = []
 }
 
 variable "app_port" {

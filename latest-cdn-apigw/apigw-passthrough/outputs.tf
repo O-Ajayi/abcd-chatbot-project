@@ -33,24 +33,24 @@ output "cloudfront_path_pattern" {
   value       = "/${var.api_route_prefix}/*"
 }
 
-output "passthrough_hub-central_url" {
+output "passthrough_demo_url" {
   description = "Direct API Gateway passthrough health endpoint"
   value       = "${aws_apigatewayv2_stage.prod.invoke_url}/${var.api_route_prefix}/health"
 }
 
 output "alb_dns_name" {
-  description = "Internal ALB DNS name when created by this module"
-  value       = local.create_network ? aws_lb.app[0].dns_name : null
+  description = "Internal ALB DNS name"
+  value       = aws_lb.app.dns_name
 }
 
 output "alb_listener_arn" {
   description = "ALB listener ARN used by the passthrough integration"
-  value       = local.alb_listener_arn
+  value       = aws_lb_listener.http.arn
 }
 
 output "ec2_private_ip" {
-  description = "Private IP of the sample application EC2 instance when created by this module"
-  value       = local.create_network ? aws_instance.app[0].private_ip : null
+  description = "Private IP of the sample application EC2 instance"
+  value       = aws_instance.app.private_ip
 }
 
 output "vpc_id" {

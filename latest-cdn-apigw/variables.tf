@@ -31,7 +31,7 @@ variable "apigw_passthrough_route_prefix" {
 }
 
 variable "apigw_passthrough_network_mode" {
-  description = "Use create to provision VPC/subnets/ALB/EC2, or existing to attach to pre-created network resources"
+  description = "Use create to provision VPC/subnets/NAT plus ALB/EC2, or existing to create only ALB/EC2 in a pre-existing VPC and subnets"
   type        = string
   default     = "create"
 
@@ -60,19 +60,7 @@ variable "apigw_passthrough_existing_private_subnet_ids" {
 }
 
 variable "apigw_passthrough_existing_vpc_cidr" {
-  description = "Optional VPC CIDR override when using existing network resources"
+  description = "Optional VPC CIDR override when apigw_passthrough_network_mode is existing"
   type        = string
   default     = ""
-}
-
-variable "apigw_passthrough_existing_alb_listener_arn" {
-  description = "Existing ALB listener ARN when apigw_passthrough_network_mode is existing"
-  type        = string
-  default     = ""
-}
-
-variable "apigw_passthrough_existing_alb_security_group_ids" {
-  description = "Security group IDs on the existing ALB; ingress from the passthrough VPC link is added automatically"
-  type        = list(string)
-  default     = []
 }
