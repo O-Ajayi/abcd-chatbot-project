@@ -12,21 +12,6 @@ output "hub_central_ui_url" {
   value       = "https://${aws_cloudfront_distribution.documents.domain_name}"
 }
 
-output "hub_central_status_endpoint" {
-  description = "Status endpoint via CloudFront (same origin as the UI)"
-  value       = "https://${aws_cloudfront_distribution.documents.domain_name}/status"
-}
-
-output "api_gateway_invoke_url" {
-  description = "Direct API Gateway invoke URL for the status route"
-  value       = "${aws_api_gateway_stage.prod.invoke_url}/status"
-}
-
-output "lambda_function_name" {
-  description = "Lambda function backing the status API"
-  value       = aws_lambda_function.hub_central_status.function_name
-}
-
 output "apigw_passthrough_enabled" {
   description = "Whether the passthrough stack is enabled"
   value       = var.enable_apigw_passthrough
@@ -40,6 +25,11 @@ output "apigw_passthrough_cdn_url" {
 output "apigw_passthrough_api_url" {
   description = "Direct API Gateway passthrough endpoint"
   value       = length(module.apigw_passthrough) > 0 ? module.apigw_passthrough[0].passthrough_demo_url : null
+}
+
+output "apigw_passthrough_authorizer_lambda" {
+  description = "Lambda authorizer function for the passthrough HTTP API"
+  value       = length(module.apigw_passthrough) > 0 ? module.apigw_passthrough[0].authorizer_lambda_name : null
 }
 
 output "apigw_passthrough_alb_dns_name" {

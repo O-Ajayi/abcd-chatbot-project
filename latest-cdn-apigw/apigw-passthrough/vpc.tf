@@ -48,7 +48,7 @@ resource "aws_subnet" "private" {
 resource "aws_eip" "nat" {
   count = local.create_vpc_network ? 1 : 0
 
-  vpc = true
+  domain = "vpc"
 
   tags = {
     Name = "${local.name_prefix}-nat-eip"

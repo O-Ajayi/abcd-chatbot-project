@@ -4,11 +4,24 @@ provider "aws" {
 
 locals {
   private_content_bucket_name = format(var.bucket_prefix_pvt, var.env, var.cdn_name)
-  rest_api_origin_host        = "${aws_api_gateway_rest_api.hub_central.id}.execute-api.${var.aws_region}.amazonaws.com"
 }
 
 resource "aws_s3_bucket" "documents" {
   bucket = local.private_content_bucket_name
+}
+
+resource "aws_s3_bucket_ownership_controls" "documents" {
+  bucket = aws_s3_bucket.documents.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "documents" {
+  depends_on = [aws_s3_bucket_ownership_controls.documents]
+
+  bucket = aws_s3_bucket.documents.id
   acl    = var.access_control
 }
 
@@ -37,19 +50,6 @@ resource "aws_cloudfront_distribution" "documents" {
     }
   }
 
-  origin {
-    domain_name = local.rest_api_origin_host
-    origin_id   = "api-gateway"
-    origin_path = "/${aws_api_gateway_stage.prod.stage_name}"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
   dynamic "origin" {
     for_each = var.enable_apigw_passthrough ? [module.apigw_passthrough[0]] : []
     content {
@@ -70,27 +70,6 @@ resource "aws_cloudfront_distribution" "documents" {
   is_ipv6_enabled     = true
   comment             = "Distribution of signed S3 objects"
   default_root_object = "index.html"
-
-  ordered_cache_behavior {
-    path_pattern     = "/status*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "api-gateway"
-    compress         = false
-
-    forwarded_values {
-      query_string = true
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 0
-  }
 
   dynamic "ordered_cache_behavior" {
     for_each = var.enable_apigw_passthrough ? [module.apigw_passthrough[0]] : []
@@ -154,12 +133,11 @@ resource "aws_cloudfront_distribution" "documents" {
   }
 
   depends_on = [
-    aws_api_gateway_stage.prod,
     module.apigw_passthrough,
   ]
 }
 
-resource "aws_s3_bucket_object" "index" {
+resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.documents.id
   key          = "index.html"
   source       = "${path.module}/index.html"

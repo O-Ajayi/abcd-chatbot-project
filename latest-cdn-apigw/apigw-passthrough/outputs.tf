@@ -38,6 +38,16 @@ output "passthrough_demo_url" {
   value       = "${aws_apigatewayv2_stage.prod.invoke_url}/${var.api_route_prefix}/health"
 }
 
+output "authorizer_lambda_name" {
+  description = "Lambda authorizer function name for passthrough routes"
+  value       = aws_lambda_function.passthrough_authorizer.function_name
+}
+
+output "authorizer_lambda_arn" {
+  description = "Lambda authorizer function ARN"
+  value       = aws_lambda_function.passthrough_authorizer.arn
+}
+
 output "alb_dns_name" {
   description = "Internal ALB DNS name"
   value       = aws_lb.app.dns_name
