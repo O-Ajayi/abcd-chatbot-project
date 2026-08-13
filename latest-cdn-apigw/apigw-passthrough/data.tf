@@ -12,11 +12,6 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-data "aws_vpc" "existing" {
-  count = local.use_existing_network ? 1 : 0
-  id    = var.existing_vpc_id
-}
-
 locals {
   name_prefix = "${var.project_name}-${var.env}"
   azs         = slice(data.aws_availability_zones.available.names, 0, 2)
@@ -26,9 +21,7 @@ locals {
 
   vpc_id = local.create_vpc_network ? aws_vpc.main[0].id : var.existing_vpc_id
 
-  vpc_cidr = local.create_vpc_network ? var.vpc_cidr : (
-    var.existing_vpc_cidr != "" ? var.existing_vpc_cidr : data.aws_vpc.existing[0].cidr_block
-  )
+  vpc_cidr = local.create_vpc_network ? var.vpc_cidr : var.existing_vpc_cidr
 
   private_subnet_ids = local.create_vpc_network ? aws_subnet.private[*].id : var.existing_private_subnet_ids
   ec2_subnet_id      = local.private_subnet_ids[0]
@@ -48,8 +41,9 @@ check "existing_network_inputs" {
   assert {
     condition = local.use_existing_network == false || (
       var.existing_vpc_id != "" &&
+      var.existing_vpc_cidr != "" &&
       length(var.existing_private_subnet_ids) >= 2
     )
-    error_message = "When network_mode is existing, set existing_vpc_id and at least two existing_private_subnet_ids."
+    error_message = "When network_mode is existing, set existing_vpc_id, existing_vpc_cidr, and at least two existing_private_subnet_ids."
   }
 }

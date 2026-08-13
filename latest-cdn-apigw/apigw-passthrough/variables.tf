@@ -46,7 +46,7 @@ variable "existing_private_subnet_ids" {
 }
 
 variable "existing_vpc_cidr" {
-  description = "Optional VPC CIDR override when network_mode is existing"
+  description = "VPC CIDR block when network_mode is existing (required for security group rules)"
   type        = string
   default     = ""
 }

@@ -60,7 +60,7 @@ variable "apigw_passthrough_existing_private_subnet_ids" {
 }
 
 variable "apigw_passthrough_existing_vpc_cidr" {
-  description = "Optional VPC CIDR override when apigw_passthrough_network_mode is existing"
+  description = "VPC CIDR when apigw_passthrough_network_mode is existing (required)"
   type        = string
   default     = ""
 }

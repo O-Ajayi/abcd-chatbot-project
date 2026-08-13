@@ -33,18 +33,18 @@ output "apigw_passthrough_enabled" {
 }
 
 output "apigw_passthrough_cdn_url" {
-  description = "Passthrough hub-central endpoint via CloudFront"
-  value       = var.enable_apigw_passthrough ? "https://${aws_cloudfront_distribution.documents.domain_name}/${var.apigw_passthrough_route_prefix}/health" : null
+  description = "Passthrough demo endpoint via CloudFront"
+  value = length(module.apigw_passthrough) > 0 ? "https://${aws_cloudfront_distribution.documents.domain_name}/${var.apigw_passthrough_route_prefix}/health" : null
 }
 
 output "apigw_passthrough_api_url" {
   description = "Direct API Gateway passthrough endpoint"
-  value       = var.enable_apigw_passthrough ? module.apigw_passthrough[0].passthrough_hub-central_url : null
+  value       = length(module.apigw_passthrough) > 0 ? module.apigw_passthrough[0].passthrough_demo_url : null
 }
 
 output "apigw_passthrough_alb_dns_name" {
   description = "Internal ALB DNS name for the sample application"
-  value       = var.enable_apigw_passthrough ? module.apigw_passthrough[0].alb_dns_name : null
+  value       = length(module.apigw_passthrough) > 0 ? module.apigw_passthrough[0].alb_dns_name : null
 }
 
 # output "hosted_zone_name" {
