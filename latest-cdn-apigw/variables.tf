@@ -18,6 +18,24 @@ variable "access_control" {
   default = "private"
 }
 
+variable "create_cdn" {
+  description = "When true, create the S3 bucket and CloudFront distribution. When false, use existing_cloudfront_domain_name."
+  type        = bool
+  default     = true
+}
+
+variable "existing_cloudfront_domain_name" {
+  description = "Existing CloudFront distribution domain name when create_cdn is false (e.g. d1234abcd.cloudfront.net)"
+  type        = string
+  default     = ""
+}
+
+variable "existing_cloudfront_distribution_id" {
+  description = "Existing CloudFront distribution ID when create_cdn is false (reference only)"
+  type        = string
+  default     = ""
+}
+
 variable "enable_apigw_passthrough" {
   description = "Deploy API Gateway passthrough stack to private ALB/EC2 and connect it to CloudFront"
   type        = bool
@@ -25,15 +43,15 @@ variable "enable_apigw_passthrough" {
 }
 
 variable "apigw_passthrough_route_prefix" {
-  description = "CloudFront/API Gateway path prefix for passthrough routes"
+  description = "Optional CloudFront path prefix for passthrough cache behavior (e.g. app -> /app/*). Leave empty to send all CloudFront paths to API Gateway. API Gateway always forwards any route to the ALB."
   type        = string
-  default     = "app"
+  default     = ""
 }
 
 variable "apigw_passthrough_network_mode" {
-  description = "Use create to provision VPC/subnets/NAT plus ALB/EC2, or existing to create only ALB/EC2 in a pre-existing VPC and subnets"
+  description = "Use create to provision VPC/subnets/NAT plus ALB/EC2, or existing to reuse VPC/subnets and skip network creation"
   type        = string
-  default     = "create"
+  default     = "existing"
 
   validation {
     condition     = contains(["create", "existing"], var.apigw_passthrough_network_mode)
@@ -61,6 +79,24 @@ variable "apigw_passthrough_existing_private_subnet_ids" {
 
 variable "apigw_passthrough_existing_vpc_cidr" {
   description = "VPC CIDR when apigw_passthrough_network_mode is existing (required)"
+  type        = string
+  default     = ""
+}
+
+variable "apigw_passthrough_existing_alb_arn" {
+  description = "Existing internal ALB ARN. When set, skips creating ALB, target group, and EC2 instance."
+  type        = string
+  default     = ""
+}
+
+variable "apigw_passthrough_existing_alb_listener_port" {
+  description = "Listener port on the existing ALB used for the API Gateway integration"
+  type        = number
+  default     = 80
+}
+
+variable "apigw_passthrough_existing_vpc_link_security_group_id" {
+  description = "Existing security group for API Gateway VPC link ENIs. When set, skips creating a new VPC link security group."
   type        = string
   default     = ""
 }

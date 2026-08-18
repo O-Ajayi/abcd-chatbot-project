@@ -30,7 +30,7 @@ resource "aws_apigatewayv2_authorizer" "passthrough" {
 resource "aws_apigatewayv2_vpc_link" "passthrough" {
   name               = "${local.name_prefix}-vpc-link"
   subnet_ids         = local.private_subnet_ids
-  security_group_ids = [aws_security_group.vpc_link.id]
+  security_group_ids = [local.vpc_link_security_group_id]
 
   tags = {
     Name = "${local.name_prefix}-vpc-link"
@@ -43,29 +43,21 @@ resource "aws_apigatewayv2_integration" "alb" {
   integration_method     = "ANY"
   connection_type        = "VPC_LINK"
   connection_id          = aws_apigatewayv2_vpc_link.passthrough.id
-  integration_uri        = aws_lb_listener.http.arn
+  integration_uri        = local.alb_listener_arn
   payload_format_version = "1.0"
 }
 
-resource "aws_apigatewayv2_route" "app_health" {
+resource "aws_apigatewayv2_route" "proxy" {
   api_id             = aws_apigatewayv2_api.passthrough.id
-  route_key          = "GET /${var.api_route_prefix}/health"
+  route_key          = "ANY /{proxy+}"
   target             = "integrations/${aws_apigatewayv2_integration.alb.id}"
   authorization_type = "CUSTOM"
   authorizer_id      = aws_apigatewayv2_authorizer.passthrough.id
 }
 
-resource "aws_apigatewayv2_route" "app_proxy" {
+resource "aws_apigatewayv2_route" "root" {
   api_id             = aws_apigatewayv2_api.passthrough.id
-  route_key          = "ANY /${var.api_route_prefix}/{proxy+}"
-  target             = "integrations/${aws_apigatewayv2_integration.alb.id}"
-  authorization_type = "CUSTOM"
-  authorizer_id      = aws_apigatewayv2_authorizer.passthrough.id
-}
-
-resource "aws_apigatewayv2_route" "app_root" {
-  api_id             = aws_apigatewayv2_api.passthrough.id
-  route_key          = "GET /${var.api_route_prefix}"
+  route_key          = "ANY /"
   target             = "integrations/${aws_apigatewayv2_integration.alb.id}"
   authorization_type = "CUSTOM"
   authorizer_id      = aws_apigatewayv2_authorizer.passthrough.id

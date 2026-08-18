@@ -64,7 +64,22 @@ variable "instance_type" {
 }
 
 variable "api_route_prefix" {
-  description = "Route prefix exposed through CloudFront and API Gateway"
+  description = "Optional CloudFront path prefix for passthrough cache behavior (e.g. app -> /app/*). API Gateway forwards all routes to the ALB regardless of this value."
   type        = string
-  default     = "app"
+  default     = ""
+}
+
+variable "existing_alb" {
+  description = "Existing internal ALB config. When set, skips creating ALB, target group, and EC2 instance."
+  type = object({
+    arn           = string
+    listener_port = optional(number, 80)
+  })
+  default = null
+}
+
+variable "existing_vpc_link_security_group_id" {
+  description = "Existing security group for the API Gateway VPC link ENIs. When set, skips creating a new VPC link security group."
+  type        = string
+  default     = ""
 }

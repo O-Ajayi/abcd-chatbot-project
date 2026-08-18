@@ -7,11 +7,13 @@ locals {
 }
 
 resource "aws_s3_bucket" "documents" {
+  count  = var.create_cdn ? 1 : 0
   bucket = local.private_content_bucket_name
 }
 
 resource "aws_s3_bucket_ownership_controls" "documents" {
-  bucket = aws_s3_bucket.documents.id
+  count  = var.create_cdn ? 1 : 0
+  bucket = aws_s3_bucket.documents[0].id
 
   rule {
     object_ownership = "BucketOwnerPreferred"
@@ -19,14 +21,16 @@ resource "aws_s3_bucket_ownership_controls" "documents" {
 }
 
 resource "aws_s3_bucket_acl" "documents" {
+  count      = var.create_cdn ? 1 : 0
   depends_on = [aws_s3_bucket_ownership_controls.documents]
 
-  bucket = aws_s3_bucket.documents.id
+  bucket = aws_s3_bucket.documents[0].id
   acl    = var.access_control
 }
 
 resource "aws_s3_bucket_public_access_block" "documents" {
-  bucket = aws_s3_bucket.documents.id
+  count  = var.create_cdn ? 1 : 0
+  bucket = aws_s3_bucket.documents[0].id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -34,19 +38,20 @@ resource "aws_s3_bucket_public_access_block" "documents" {
   restrict_public_buckets = true
 }
 
-# Create the CloudFront OAI
 resource "aws_cloudfront_origin_access_identity" "documents-identity" {
+  count   = var.create_cdn ? 1 : 0
   comment = "Cloudfront identity for access to S3 Bucket"
 }
 
-# Set up the CDN
 resource "aws_cloudfront_distribution" "documents" {
+  count = var.create_cdn ? 1 : 0
+
   origin {
-    domain_name = aws_s3_bucket.documents.bucket_regional_domain_name
+    domain_name = aws_s3_bucket.documents[0].bucket_regional_domain_name
     origin_id   = "s3"
 
     s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.documents-identity.cloudfront_access_identity_path
+      origin_access_identity = aws_cloudfront_origin_access_identity.documents-identity[0].cloudfront_access_identity_path
     }
   }
 
@@ -96,7 +101,7 @@ resource "aws_cloudfront_distribution" "documents" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"] # reads only
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "s3"
     compress         = true
@@ -138,33 +143,34 @@ resource "aws_cloudfront_distribution" "documents" {
 }
 
 resource "aws_s3_object" "index" {
-  bucket       = aws_s3_bucket.documents.id
+  count        = var.create_cdn ? 1 : 0
+  bucket       = aws_s3_bucket.documents[0].id
   key          = "index.html"
   source       = "${path.module}/index.html"
   content_type = "text/html"
   etag         = filemd5("${path.module}/index.html")
 }
 
-
 resource "aws_s3_bucket_policy" "documents" {
-  bucket = aws_s3_bucket.documents.id
-  policy = data.aws_iam_policy_document.documents-cloudfront-policy.json
+  count  = var.create_cdn ? 1 : 0
+  bucket = aws_s3_bucket.documents[0].id
+  policy = data.aws_iam_policy_document.documents-cloudfront-policy[0].json
 }
 
-
 data "aws_iam_policy_document" "documents-cloudfront-policy" {
+  count = var.create_cdn ? 1 : 0
+
   statement {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = [aws_cloudfront_origin_access_identity.documents-identity.iam_arn]
+      identifiers = [aws_cloudfront_origin_access_identity.documents-identity[0].iam_arn]
     }
     actions = [
       "s3:GetObject",
     ]
     resources = [
-      "${aws_s3_bucket.documents.arn}/*",
+      "${aws_s3_bucket.documents[0].arn}/*",
     ]
   }
 }
-

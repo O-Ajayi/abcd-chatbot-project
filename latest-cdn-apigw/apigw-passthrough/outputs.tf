@@ -30,12 +30,12 @@ output "cloudfront_origin_path" {
 
 output "cloudfront_path_pattern" {
   description = "CloudFront path pattern for passthrough routes"
-  value       = "/${var.api_route_prefix}/*"
+  value       = var.api_route_prefix != "" ? "/${var.api_route_prefix}/*" : "/*"
 }
 
 output "passthrough_demo_url" {
-  description = "Direct API Gateway passthrough health endpoint"
-  value       = "${aws_apigatewayv2_stage.prod.invoke_url}/${var.api_route_prefix}/health"
+  description = "Direct API Gateway passthrough endpoint (forwards to ALB root path)"
+  value       = aws_apigatewayv2_stage.prod.invoke_url
 }
 
 output "authorizer_lambda_name" {
@@ -48,19 +48,29 @@ output "authorizer_lambda_arn" {
   value       = aws_lambda_function.passthrough_authorizer.arn
 }
 
+output "using_existing_alb" {
+  description = "Whether an existing ALB was wired instead of creating a new one"
+  value       = local.use_existing_alb
+}
+
 output "alb_dns_name" {
   description = "Internal ALB DNS name"
-  value       = aws_lb.app.dns_name
+  value       = local.alb_dns_name
 }
 
 output "alb_listener_arn" {
   description = "ALB listener ARN used by the passthrough integration"
-  value       = aws_lb_listener.http.arn
+  value       = local.alb_listener_arn
+}
+
+output "alb_arn" {
+  description = "ALB ARN used by the passthrough integration"
+  value       = local.use_existing_alb ? data.aws_lb.existing[0].arn : aws_lb.app[0].arn
 }
 
 output "ec2_private_ip" {
   description = "Private IP of the sample application EC2 instance"
-  value       = aws_instance.app.private_ip
+  value       = local.create_alb ? aws_instance.app[0].private_ip : null
 }
 
 output "vpc_id" {
@@ -71,4 +81,9 @@ output "vpc_id" {
 output "network_mode" {
   description = "Network provisioning mode in use"
   value       = var.network_mode
+}
+
+output "vpc_link_security_group_id" {
+  description = "Security group ID attached to the API Gateway VPC link"
+  value       = local.vpc_link_security_group_id
 }

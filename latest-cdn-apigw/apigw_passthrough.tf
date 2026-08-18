@@ -12,4 +12,11 @@ module "apigw_passthrough" {
   existing_vpc_id             = var.apigw_passthrough_existing_vpc_id
   existing_private_subnet_ids = var.apigw_passthrough_existing_private_subnet_ids
   existing_vpc_cidr           = var.apigw_passthrough_existing_vpc_cidr
+
+  existing_alb = var.apigw_passthrough_existing_alb_arn != "" ? {
+    arn           = var.apigw_passthrough_existing_alb_arn
+    listener_port = var.apigw_passthrough_existing_alb_listener_port
+  } : null
+
+  existing_vpc_link_security_group_id = var.apigw_passthrough_existing_vpc_link_security_group_id
 }

@@ -1,4 +1,6 @@
 resource "aws_security_group" "vpc_link" {
+  count = local.use_existing_vpc_link_sg ? 0 : 1
+
   name        = "${local.name_prefix}-vpc-link"
   description = "Security group for API Gateway VPC link ENIs"
   vpc_id      = local.vpc_id
@@ -16,6 +18,8 @@ resource "aws_security_group" "vpc_link" {
 }
 
 resource "aws_security_group" "alb" {
+  count = local.create_alb ? 1 : 0
+
   name        = "${local.name_prefix}-alb"
   description = "Security group for internal ALB"
   vpc_id      = local.vpc_id
@@ -25,7 +29,7 @@ resource "aws_security_group" "alb" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [aws_security_group.vpc_link.id]
+    security_groups = [local.vpc_link_security_group_id]
   }
 
   egress {
@@ -41,6 +45,8 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "ec2" {
+  count = local.create_alb ? 1 : 0
+
   name        = "${local.name_prefix}-ec2"
   description = "Security group for sample application EC2 instance"
   vpc_id      = local.vpc_id
@@ -50,7 +56,7 @@ resource "aws_security_group" "ec2" {
     from_port       = var.app_port
     to_port         = var.app_port
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    security_groups = [aws_security_group.alb[0].id]
   }
 
   egress {
@@ -63,4 +69,16 @@ resource "aws_security_group" "ec2" {
   tags = {
     Name = "${local.name_prefix}-ec2"
   }
+}
+
+resource "aws_security_group_rule" "existing_alb_from_vpc_link" {
+  for_each = local.use_existing_alb && !local.use_existing_vpc_link_sg ? toset(local.existing_alb_security_group_ids) : toset([])
+
+  type                     = "ingress"
+  from_port                = local.existing_alb_listener_port
+  to_port                  = local.existing_alb_listener_port
+  protocol                 = "tcp"
+  security_group_id        = each.value
+  source_security_group_id = local.vpc_link_security_group_id
+  description              = "HTTP from API Gateway VPC link"
 }
