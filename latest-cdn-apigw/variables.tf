@@ -43,7 +43,7 @@ variable "enable_apigw_passthrough" {
 }
 
 variable "apigw_passthrough_route_prefix" {
-  description = "Optional CloudFront path prefix for passthrough cache behavior (e.g. app -> /app/*). Leave empty to send all CloudFront paths to API Gateway. API Gateway always forwards any route to the ALB."
+  description = "CloudFront path prefix for API Gateway passthrough (e.g. api -> /api/*). Leave empty to serve only S3 from CloudFront. API Gateway direct URL always forwards any route to the ALB."
   type        = string
   default     = ""
 }

@@ -29,8 +29,8 @@ output "cloudfront_origin_path" {
 }
 
 output "cloudfront_path_pattern" {
-  description = "CloudFront path pattern for passthrough routes"
-  value       = var.api_route_prefix != "" ? "/${var.api_route_prefix}/*" : "/*"
+  description = "CloudFront path pattern for passthrough routes (null when no prefix is set)"
+  value       = var.api_route_prefix != "" ? "/${var.api_route_prefix}/*" : null
 }
 
 output "passthrough_demo_url" {

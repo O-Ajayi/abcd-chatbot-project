@@ -8,17 +8,20 @@ aws_region = "us-east-1"
 env        = "dev"
 cdn_name   = "hub"
 
-create_cdn               = false # set true later when ready to provision CDN
+create_cdn               = true
 enable_apigw_passthrough = true
 
+# CDN root (/) serves S3 index.html. Backend passthrough via CloudFront uses /api/*
+apigw_passthrough_route_prefix = "api"
+
 apigw_passthrough_network_mode                = "existing"
-apigw_passthrough_existing_vpc_id             = "vpc-0d81120aeb9c95e6d"
-apigw_passthrough_existing_private_subnet_ids = ["subnet-00088cd0923498de6", "subnet-0fdd2b9c209a20e56"]
+apigw_passthrough_existing_vpc_id             = "vpc-050a7a633cf4012cc"
+apigw_passthrough_existing_private_subnet_ids = ["subnet-05896f880410b7a85", "subnet-0718c201344a7c04e"]
 apigw_passthrough_existing_vpc_cidr           = "172.31.0.0/16"
 
-apigw_passthrough_existing_alb_arn                    = "arn:aws:elasticloadbalancing:us-east-1:852100867941:loadbalancer/app/my-demo-lb/3ab9d6bd812d62fa"
+apigw_passthrough_existing_alb_arn                    = "arn:aws:elasticloadbalancing:us-east-1:518761466634:loadbalancer/app/my-demo-alb/f8c504ad5b1522a9"
 apigw_passthrough_existing_alb_listener_port          = 80
-apigw_passthrough_existing_vpc_link_security_group_id = "sg-09c414ae6eeef29ae" # replace with your VPC link SG
+apigw_passthrough_existing_vpc_link_security_group_id = "sg-0ac5361c6954d0365" # replace with your VPC link SG
 
 # After apply, use output apigw_passthrough_cloudfront_origin_config when create_cdn = true
 

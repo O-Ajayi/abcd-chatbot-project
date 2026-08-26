@@ -56,7 +56,7 @@ resource "aws_cloudfront_distribution" "documents" {
   }
 
   dynamic "origin" {
-    for_each = var.enable_apigw_passthrough ? [module.apigw_passthrough[0]] : []
+    for_each = var.enable_apigw_passthrough && var.apigw_passthrough_route_prefix != "" ? [module.apigw_passthrough[0]] : []
     content {
       domain_name = origin.value.cloudfront_origin_domain
       origin_id   = "apigw-passthrough"
@@ -77,7 +77,7 @@ resource "aws_cloudfront_distribution" "documents" {
   default_root_object = "index.html"
 
   dynamic "ordered_cache_behavior" {
-    for_each = var.enable_apigw_passthrough ? [module.apigw_passthrough[0]] : []
+    for_each = var.enable_apigw_passthrough && var.apigw_passthrough_route_prefix != "" ? [module.apigw_passthrough[0]] : []
     content {
       path_pattern     = ordered_cache_behavior.value.cloudfront_path_pattern
       allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
