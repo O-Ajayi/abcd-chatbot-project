@@ -43,6 +43,28 @@ resource "aws_cloudfront_origin_access_identity" "documents-identity" {
   comment = "Cloudfront identity for access to S3 Bucket"
 }
 
+resource "aws_cloudfront_function" "documents_s3_default" {
+  count   = var.create_cdn ? 1 : 0
+  name    = "${var.env}-${var.cdn_name}-s3-default"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  comment = "Viewer request function for S3 default cache behavior"
+  code    = <<-EOF
+function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    } else if (!uri.includes('.')) {
+        request.uri += '/index.html';
+    }
+
+    return request;
+}
+EOF
+}
+
 resource "aws_cloudfront_distribution" "documents" {
   count = var.create_cdn ? 1 : 0
 
@@ -105,6 +127,11 @@ resource "aws_cloudfront_distribution" "documents" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "s3"
     compress         = true
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.documents_s3_default[0].arn
+    }
 
     forwarded_values {
       query_string = false

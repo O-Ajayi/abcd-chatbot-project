@@ -15,13 +15,13 @@ enable_apigw_passthrough = true
 apigw_passthrough_route_prefix = "api"
 
 apigw_passthrough_network_mode                = "existing"
-apigw_passthrough_existing_vpc_id             = "vpc-050a7a633cf4012cc"
-apigw_passthrough_existing_private_subnet_ids = ["subnet-05896f880410b7a85", "subnet-0718c201344a7c04e"]
+apigw_passthrough_existing_vpc_id             = "vpc-00777c66c28249fbc"
+apigw_passthrough_existing_private_subnet_ids = ["subnet-0f48cb641292c6b1c", "subnet-06ce5b2c983434866"]
 apigw_passthrough_existing_vpc_cidr           = "172.31.0.0/16"
 
-apigw_passthrough_existing_alb_arn                    = "arn:aws:elasticloadbalancing:us-east-1:518761466634:loadbalancer/app/my-demo-alb/f8c504ad5b1522a9"
+apigw_passthrough_existing_alb_arn                    = "arn:aws:elasticloadbalancing:us-east-1:578478003474:loadbalancer/app/my-demo-alb/542b96592a7d1048"
 apigw_passthrough_existing_alb_listener_port          = 80
-apigw_passthrough_existing_vpc_link_security_group_id = "sg-0ac5361c6954d0365" # replace with your VPC link SG
+apigw_passthrough_existing_vpc_link_security_group_id = "sg-0c95918122a3467a9" # replace with your VPC link SG
 
 # After apply, use output apigw_passthrough_cloudfront_origin_config when create_cdn = true
 
